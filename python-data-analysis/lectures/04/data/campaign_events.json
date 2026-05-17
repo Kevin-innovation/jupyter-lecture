@@ -1,0 +1,254 @@
+[
+  {
+    "date": "2025-01-15",
+    "channel": "web",
+    "campaign": "CAMP-01-web",
+    "clicks": 1717,
+    "conversions": 75
+  },
+  {
+    "date": "2025-01-15",
+    "channel": "app",
+    "campaign": "CAMP-01-app",
+    "clicks": 4902,
+    "conversions": 204
+  },
+  {
+    "date": "2025-01-15",
+    "channel": "store",
+    "campaign": "CAMP-01-store",
+    "clicks": 8756,
+    "conversions": 668
+  },
+  {
+    "date": "2025-02-15",
+    "channel": "web",
+    "campaign": "CAMP-02-web",
+    "clicks": 5316,
+    "conversions": 415
+  },
+  {
+    "date": "2025-02-15",
+    "channel": "app",
+    "campaign": "CAMP-02-app",
+    "clicks": 5594,
+    "conversions": 238
+  },
+  {
+    "date": "2025-02-15",
+    "channel": "store",
+    "campaign": "CAMP-02-store",
+    "clicks": 7860,
+    "conversions": 673
+  },
+  {
+    "date": "2025-03-15",
+    "channel": "web",
+    "campaign": "CAMP-03-web",
+    "clicks": 5643,
+    "conversions": 202
+  },
+  {
+    "date": "2025-03-15",
+    "channel": "app",
+    "campaign": "CAMP-03-app",
+    "clicks": 8851,
+    "conversions": 344
+  },
+  {
+    "date": "2025-03-15",
+    "channel": "store",
+    "campaign": "CAMP-03-store",
+    "clicks": 8950,
+    "conversions": 402
+  },
+  {
+    "date": "2025-04-15",
+    "channel": "web",
+    "campaign": "CAMP-04-web",
+    "clicks": 1405,
+    "conversions": 71
+  },
+  {
+    "date": "2025-04-15",
+    "channel": "app",
+    "campaign": "CAMP-04-app",
+    "clicks": 1720,
+    "conversions": 156
+  },
+  {
+    "date": "2025-04-15",
+    "channel": "store",
+    "campaign": "CAMP-04-store",
+    "clicks": 7111,
+    "conversions": 354
+  },
+  {
+    "date": "2025-05-15",
+    "channel": "web",
+    "campaign": "CAMP-05-web",
+    "clicks": 2203,
+    "conversions": 180
+  },
+  {
+    "date": "2025-05-15",
+    "channel": "app",
+    "campaign": "CAMP-05-app",
+    "clicks": 1645,
+    "conversions": 53
+  },
+  {
+    "date": "2025-05-15",
+    "channel": "store",
+    "campaign": "CAMP-05-store",
+    "clicks": 4741,
+    "conversions": 167
+  },
+  {
+    "date": "2025-06-15",
+    "channel": "web",
+    "campaign": "CAMP-06-web",
+    "clicks": 4125,
+    "conversions": 357
+  },
+  {
+    "date": "2025-06-15",
+    "channel": "app",
+    "campaign": "CAMP-06-app",
+    "clicks": 8776,
+    "conversions": 521
+  },
+  {
+    "date": "2025-06-15",
+    "channel": "store",
+    "campaign": "CAMP-06-store",
+    "clicks": 5710,
+    "conversions": 400
+  },
+  {
+    "date": "2025-07-15",
+    "channel": "web",
+    "campaign": "CAMP-07-web",
+    "clicks": 6833,
+    "conversions": 221
+  },
+  {
+    "date": "2025-07-15",
+    "channel": "app",
+    "campaign": "CAMP-07-app",
+    "clicks": 4748,
+    "conversions": 412
+  },
+  {
+    "date": "2025-07-15",
+    "channel": "store",
+    "campaign": "CAMP-07-store",
+    "clicks": 2059,
+    "conversions": 97
+  },
+  {
+    "date": "2025-08-15",
+    "channel": "web",
+    "campaign": "CAMP-08-web",
+    "clicks": 2300,
+    "conversions": 58
+  },
+  {
+    "date": "2025-08-15",
+    "channel": "app",
+    "campaign": "CAMP-08-app",
+    "clicks": 6115,
+    "conversions": 470
+  },
+  {
+    "date": "2025-08-15",
+    "channel": "store",
+    "campaign": "CAMP-08-store",
+    "clicks": 8912,
+    "conversions": 683
+  },
+  {
+    "date": "2025-09-15",
+    "channel": "web",
+    "campaign": "CAMP-09-web",
+    "clicks": 8488,
+    "conversions": 360
+  },
+  {
+    "date": "2025-09-15",
+    "channel": "app",
+    "campaign": "CAMP-09-app",
+    "clicks": 4145,
+    "conversions": 203
+  },
+  {
+    "date": "2025-09-15",
+    "channel": "store",
+    "campaign": "CAMP-09-store",
+    "clicks": 5374,
+    "conversions": 284
+  },
+  {
+    "date": "2025-10-15",
+    "channel": "web",
+    "campaign": "CAMP-10-web",
+    "clicks": 8017,
+    "conversions": 352
+  },
+  {
+    "date": "2025-10-15",
+    "channel": "app",
+    "campaign": "CAMP-10-app",
+    "clicks": 8964,
+    "conversions": 640
+  },
+  {
+    "date": "2025-10-15",
+    "channel": "store",
+    "campaign": "CAMP-10-store",
+    "clicks": 3933,
+    "conversions": 125
+  },
+  {
+    "date": "2025-11-15",
+    "channel": "web",
+    "campaign": "CAMP-11-web",
+    "clicks": 5205,
+    "conversions": 340
+  },
+  {
+    "date": "2025-11-15",
+    "channel": "app",
+    "campaign": "CAMP-11-app",
+    "clicks": 8165,
+    "conversions": 325
+  },
+  {
+    "date": "2025-11-15",
+    "channel": "store",
+    "campaign": "CAMP-11-store",
+    "clicks": 4483,
+    "conversions": 264
+  },
+  {
+    "date": "2025-12-15",
+    "channel": "web",
+    "campaign": "CAMP-12-web",
+    "clicks": 3149,
+    "conversions": 217
+  },
+  {
+    "date": "2025-12-15",
+    "channel": "app",
+    "campaign": "CAMP-12-app",
+    "clicks": 1899,
+    "conversions": 162
+  },
+  {
+    "date": "2025-12-15",
+    "channel": "store",
+    "campaign": "CAMP-12-store",
+    "clicks": 7624,
+    "conversions": 441
+  }
+]
