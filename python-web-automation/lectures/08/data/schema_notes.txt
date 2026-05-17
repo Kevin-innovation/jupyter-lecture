@@ -1,0 +1,6 @@
+record_id: unique key
+title: required text
+category: notice/course/resource/event
+price_text: Korean won string
+stock: non-negative integer
+status: active or paused

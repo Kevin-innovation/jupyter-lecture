@@ -1,0 +1,11 @@
+file_name,group,type,week,path
+lesson_plan.md,plan,md,1,files/lesson_plan.md
+score_template.csv,score,csv,1,files/score_template.csv
+checklist.txt,ops,txt,1,files/checklist.txt
+sample_report.html,report,html,1,files/sample_report.html
+rubric.json,score,json,1,files/rubric.json
+worksheet_01.txt,worksheet,txt,1,files/worksheet_01.txt
+worksheet_02.txt,worksheet,txt,2,files/worksheet_02.txt
+parent_notice.md,notice,md,2,files/parent_notice.md
+attendance_form.csv,ops,csv,2,files/attendance_form.csv
+archive_note.txt,archive,txt,2,files/archive_note.txt

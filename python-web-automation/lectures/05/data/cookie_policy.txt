@@ -1,0 +1,5 @@
+User consent required
+No personal data in demo cookies
+Session cookies expire after class
+Cart state is synthetic
+Do not store passwords in cookies

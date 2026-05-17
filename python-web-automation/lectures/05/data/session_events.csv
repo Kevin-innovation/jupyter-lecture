@@ -1,0 +1,11 @@
+time,event,product_id,quantity
+09:00,login,,0
+09:03,filter,book,0
+09:05,add,book-1,1
+09:08,add,kit-1,1
+09:12,remove,book-1,1
+09:15,add,book-2,2
+09:18,checkout,,0
+09:20,logout,,0
+09:30,login,,0
+09:35,add,tool-1,1

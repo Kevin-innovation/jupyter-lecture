@@ -1,0 +1,21 @@
+{
+  "required_fields": [
+    "record_id",
+    "title",
+    "category",
+    "price_text",
+    "stock",
+    "status"
+  ],
+  "valid_categories": [
+    "notice",
+    "course",
+    "resource",
+    "event"
+  ],
+  "valid_status": [
+    "active",
+    "paused"
+  ],
+  "max_price": 100000
+}

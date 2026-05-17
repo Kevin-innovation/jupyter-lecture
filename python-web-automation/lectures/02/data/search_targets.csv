@@ -1,0 +1,6 @@
+query,category,min_views,max_pages
+automation,all,800,3
+python,python,900,3
+web,web,700,2
+qa,qa,600,3
+ops,ops,650,2

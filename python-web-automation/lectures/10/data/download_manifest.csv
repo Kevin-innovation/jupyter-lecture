@@ -1,0 +1,9 @@
+course,filename,kind,size_kb
+Python 웹 자동화,Python_웹_자동화_guide.pdf,guide,127
+Python 데이터분석,Python_데이터분석_guide.pdf,guide,134
+웹 기본,웹_기본_guide.pdf,guide,141
+C언어 기초,C언어_기초_guide.pdf,guide,148
+Java 입문,Java_입문_guide.pdf,guide,155
+COS PRO,COS_PRO_guide.pdf,guide,162
+Python 웹 자동화,web_auto_fixture.zip,data,88
+Python 데이터분석,analysis_sample.csv,data,31

@@ -1,0 +1,7 @@
+endpoint_id,url,priority,min_interval_seconds,owner
+notice,https://lesson.local/public/notices,1,0.2,ops
+status,https://lesson.local/public/status,2,0.3,ops
+report,https://lesson.local/public/report,3,0.4,teacher
+admin,https://lesson.local/private/admin,4,1.0,blocked
+archive,https://lesson.local/public/archive,5,0.5,teacher
+media,https://lesson.local/tmp/media,6,0.5,blocked

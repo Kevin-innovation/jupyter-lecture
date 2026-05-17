@@ -1,0 +1,10 @@
+endpoint_id,attempt,status_code,body
+notice,1,429,rate limited
+notice,2,200,notice ok
+status,1,503,temporary
+status,2,503,temporary
+status,3,200,status ok
+report,1,200,report ok
+archive,1,404,not found
+admin,1,403,blocked
+media,1,200,media ok

@@ -1,0 +1,6 @@
+criterion,max_score,description
+selector_accuracy,30,HTML 구조에 맞는 selector 사용
+type_conversion,20,숫자와 퍼센트 변환 정확성
+summary_quality,20,요약이 데이터와 일치
+csv_output,20,CSV 헤더와 행 저장
+safety_note,10,자동화 안전 규칙 언급

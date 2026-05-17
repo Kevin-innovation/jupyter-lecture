@@ -1,0 +1,6 @@
+selector,timeout_steps,expected_text
+[data-testid="metric-active"],0,활성 18
+[data-testid="metric-submit"],2,제출 42
+[data-testid="metric-pass"],3,통과 31
+[data-testid="student-row"],2,김도윤
+[data-testid="missing"],1,

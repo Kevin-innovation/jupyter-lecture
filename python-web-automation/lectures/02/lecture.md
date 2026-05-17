@@ -1,0 +1,387 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+# 레슨 02 — URL 파라미터와 페이지네이션
+
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/02/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2002%20%E2%80%94%20URL%20%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0%EC%99%80%20%ED%8E%98%EC%9D%B4%EC%A7%80%EB%84%A4%EC%9D%B4%EC%85%98.ipynb)
+
+이 노트북은 읽기와 따라하기용 강의 노트북이다. 학생은 셀을 위에서 아래로 실행하며 입력 데이터가 어떤 구조로 바뀌는지 확인한다. URL 파라미터와 페이지네이션는 실제 업무 자동화에서 자주 등장하는 반복 패턴을 합성 fixture로 안전하게 연습한다.
+
+## 학습 목표
+
+1. URL을 path와 query string으로 분해한다.
+2. urlencode로 안전한 검색 URL을 만든다.
+3. 페이지 번호 규칙을 함수로 만든다.
+4. pagination 링크에서 다음 페이지를 찾는다.
+5. 여러 페이지 결과를 CSV로 저장한다.
+
+---
+
+## 1. URL을 구조로 읽기
+
+URL은 긴 문자열이 아니라 scheme, domain, path, query로 나뉜 구조다.
+
+~~~python
+import os
+import re
+import time
+import csv
+from pathlib import Path
+from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+
+try:
+    import requests
+    from bs4 import BeautifulSoup
+except ImportError:
+    import sys, subprocess
+    subprocess.check_call([sys.executable, '-m', 'pip', '-q', 'install', 'requests', 'beautifulsoup4'])
+    import requests
+    from bs4 import BeautifulSoup
+
+IS_COLAB = 'COLAB_GPU' in os.environ or 'COLAB_TPU_ADDR' in os.environ
+if IS_COLAB:
+    DATA_BASE = 'https://raw.githubusercontent.com/Kevin-innovation/jupyter-lecture/main/python-web-automation/lectures/02/data'
+else:
+    DATA_BASE = './data'
+
+def load_text(filename):
+    if DATA_BASE.startswith('http'):
+        url = f'{DATA_BASE}/{filename}'
+        response = requests.get(url, timeout=10, headers={'User-Agent': 'D-Lab-Lesson/1.0'})
+        response.raise_for_status()
+        response.encoding = response.encoding or 'utf-8'
+        return response.text
+    return Path(DATA_BASE, filename).read_text(encoding='utf-8')
+
+def load_bytes(filename):
+    if DATA_BASE.startswith('http'):
+        url = f'{DATA_BASE}/{filename}'
+        response = requests.get(url, timeout=10, headers={'User-Agent': 'D-Lab-Lesson/1.0'})
+        response.raise_for_status()
+        return response.content
+    return Path(DATA_BASE, filename).read_bytes()
+
+def clean_int(text):
+    return int(re.sub(r'[^0-9]', '', str(text)))
+
+
+print('colab:', IS_COLAB)
+print('data base:', DATA_BASE)
+
+sample_url = 'https://example.com/library/search?q=python&category=all&page=2'
+parsed = urlparse(sample_url)
+print(parsed.path, parse_qs(parsed.query))
+~~~
+
+---
+
+## 2. query string 만들기
+
+검색 조건은 딕셔너리로 관리한 뒤 urlencode로 URL에 붙인다.
+
+~~~python
+base_url = 'https://example.com/library/search'
+query = {'q': 'python automation', 'category': 'course', 'page': 1}
+print(base_url + '?' + urlencode(query))
+~~~
+
+---
+
+## 3. 검색 결과 카드
+
+반복 단위는 article.result-card다. 카드 안에서 title, views, href를 읽는다.
+
+~~~html
+<article class="result-card" data-category="python" data-page="1"><h2 class="title"><a href="/library/python-1">자료</a></h2><span class="views">조회 1,240</span></article>
+~~~
+
+~~~python
+html_text = load_text('search_page_1.html')
+soup = BeautifulSoup(html_text, 'html.parser')
+cards = soup.select('article.result-card')
+print(len(cards), cards[0].select_one('.title a').text.strip())
+~~~
+
+---
+
+## 4. 페이지네이션 순회
+
+파일명 규칙을 함수로 만들면 페이지 수가 늘어나도 반복문만 바꾸면 된다.
+
+~~~python
+def page_filename(page):
+    return f'search_page_{page}.html'
+all_titles = []
+for page in range(1, 4):
+    page_soup = BeautifulSoup(load_text(page_filename(page)), 'html.parser')
+    all_titles += [card.select_one('.title a').text.strip() for card in page_soup.select('article.result-card')]
+print(len(all_titles))
+~~~
+
+---
+
+## 데이터 출처와 안전 규칙
+
+이 레슨의 파일은 모두 수업용 합성 데이터다. 실제 사이트의 개인정보, 로그인 정보, 유료 콘텐츠를 포함하지 않는다. 실제 사이트로 확장할 때는 robots.txt, 이용 약관, 요청 간격, 수집 목적을 먼저 확인한다. 수업 중에는 fixture를 반복 실행하며 구조를 익히고, 외부 사이트를 빠르게 반복 요청하지 않는다.
+
+### 보강 설명 1
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 2
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 3
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 4
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 5
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 6
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 7
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 8
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 9
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 10
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 11
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 12
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 13
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 14
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 15
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 16
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 17
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 18
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 19
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 20
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 21
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 22
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 23
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 24
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 25
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 26
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 27
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 28
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 29
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 30
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 31
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 32
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 33
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 34
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 35
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 36
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 37
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 38
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 39
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 40
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 41
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 42
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 43
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 44
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 45
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 46
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 47
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 48
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 49
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 50
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 51
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 52
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 53
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 54
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 55
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 56
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 57
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 58
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 59
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+
+### 보강 설명 60
+
+실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+
+### 보강 설명 61
+
+레슨 02 강의은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+
+### 보강 설명 62
+
+수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+
+### 보강 설명 63
+
+운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.

@@ -1,0 +1,41 @@
+record_id,title,category,price_text,stock,status,updated_at,source_url
+P001,자동화 샘플 항목 1,course,"4,900원",3,active,2026-05-11,/items/001
+P002,자동화 샘플 항목 2,resource,"8,600원",6,active,2026-05-12,/items/002
+P003,자동화 샘플 항목 3,event,"12,300원",9,active,2026-05-13,/items/003
+P004,자동화 샘플 항목 4,notice,"16,000원",12,active,2026-05-14,/items/004
+P005,자동화 샘플 항목 5,course,"19,700원",15,paused,2026-05-15,/items/005
+P006,자동화 샘플 항목 6,resource,"23,400원",18,active,2026-05-16,/items/006
+P007,자동화 샘플 항목 7,event,"27,100원",2,active,2026-05-17,/items/007
+P008,자동화 샘플 항목 8,notice,"30,800원",5,active,2026-05-18,/items/008
+P009,자동화 샘플 항목 9,course,"34,500원",8,active,2026-05-10,/items/009
+P010,자동화 샘플 항목 10,resource,"38,200원",11,paused,2026-05-11,/items/010
+P011,자동화 샘플 항목 11,event,"41,900원",14,active,2026-05-12,/items/011
+P012,자동화 샘플 항목 12,notice,"45,600원",17,active,2026-05-13,/items/012
+P013,자동화 샘플 항목 13,course,"49,300원",1,active,2026-05-14,/items/013
+P014,자동화 샘플 항목 14,resource,"53,000원",4,active,2026-05-15,/items/014
+P015,자동화 샘플 항목 15,event,"56,700원",7,paused,2026-05-16,/items/015
+P016,자동화 샘플 항목 16,notice,"60,400원",10,active,2026-05-17,/items/016
+P017,자동화 샘플 항목 17,course,"64,100원",13,active,2026-05-18,/items/017
+P018,자동화 샘플 항목 18,resource,"67,800원",16,active,2026-05-10,/items/018
+P019,자동화 샘플 항목 19,event,"71,500원",0,active,2026-05-11,/items/019
+P020,자동화 샘플 항목 20,notice,"75,200원",3,paused,2026-05-12,/items/020
+P021,자동화 샘플 항목 21,course,"78,900원",6,active,2026-05-13,/items/021
+P022,자동화 샘플 항목 22,resource,"82,600원",9,active,2026-05-14,/items/022
+P023,자동화 샘플 항목 23,event,"86,300원",12,active,2026-05-15,/items/023
+P024,자동화 샘플 항목 24,notice,"90,000원",15,active,2026-05-16,/items/024
+P025,자동화 샘플 항목 25,course,"93,700원",18,paused,2026-05-17,/items/025
+P026,자동화 샘플 항목 26,resource,"3,400원",2,active,2026-05-18,/items/026
+P027,자동화 샘플 항목 27,event,"7,100원",5,active,2026-05-10,/items/027
+P028,자동화 샘플 항목 28,notice,"10,800원",8,active,2026-05-11,/items/028
+P029,자동화 샘플 항목 29,course,"14,500원",11,active,2026-05-12,/items/029
+P030,자동화 샘플 항목 30,resource,"18,200원",14,paused,2026-05-13,/items/030
+P031,자동화 샘플 항목 31,event,"21,900원",17,active,2026-05-14,/items/031
+P032,자동화 샘플 항목 32,notice,"25,600원",1,active,2026-05-15,/items/032
+P033,자동화 샘플 항목 33,course,"29,300원",4,active,2026-05-16,/items/033
+P034,자동화 샘플 항목 34,resource,"33,000원",7,active,2026-05-17,/items/034
+P006,중복 항목,course,"18,000원",4,active,2026-05-19,/items/006-dup
+P035,,notice,"9,000원",2,active,2026-05-19,/items/035
+P036,가격 오류 항목,resource,가격문의,3,active,2026-05-19,/items/036
+P037,카테고리 오류 항목,private,"13,000원",1,active,2026-05-19,/items/037
+P038,재고 오류 항목,event,"22,000원",-3,active,2026-05-19,/items/038
+P039,상태 오류 항목,notice,"11,000원",5,hidden,2026-05-19,/items/039

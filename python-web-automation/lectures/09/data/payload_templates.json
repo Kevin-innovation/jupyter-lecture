@@ -1,0 +1,9 @@
+{
+  "summary_template": "성공 {success}/{total}건, 총 시도 {attempts}회로 수집을 마쳤습니다.",
+  "status_labels": {
+    "200": "success",
+    "404": "stop",
+    "429": "retry",
+    "503": "retry"
+  }
+}

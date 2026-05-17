@@ -1,0 +1,14 @@
+{
+  "min_students_for_report": 10,
+  "valid_status": [
+    "open",
+    "ready",
+    "published"
+  ],
+  "required_pages": [
+    "notice",
+    "courses",
+    "downloads",
+    "status"
+  ]
+}
