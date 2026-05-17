@@ -1,0 +1,6 @@
+filename,purpose,allowed,reason
+mini_shop.html,상품 카드 파싱 연습,yes,수업용 합성 HTML
+notices.html,공지 목록 파싱 연습,yes,수업용 합성 HTML
+robots_sample.txt,접근 정책 확인 연습,yes,수업용 텍스트
+external_login_page.html,로그인 자동화 예시,no,수업 범위 밖
+private_user_data.csv,개인정보 포함 가정 데이터,no,사용 금지

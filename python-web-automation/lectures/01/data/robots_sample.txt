@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /products/
+Allow: /notice/
+Disallow: /private/
+Disallow: /login/
+Crawl-delay: 5
