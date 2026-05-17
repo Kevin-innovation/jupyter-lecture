@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 08 — 수집 데이터 검증과 저장
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/08/[학생용] 레슨 08 — 수집 데이터 검증과 저장.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. 수집한 데이터를 바로 저장하지 않고 스키마, 누락, 중복, 범위 오류를 점검한 뒤 CSV, JSON, SQLite로 남기는 파이프라인을 안전한 합성 fixture로 연습한다.
 
 ## 학습 목표

@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 10 — 통합 프로젝트: 자동화 리포트 만들기
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/10/[학생용] 레슨 10 — 통합 프로젝트: 자동화 리포트 만들기.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. HTML 파싱, 상대 URL, 자료 목록, 품질 검증, 저장, 로그 요약을 하나의 작은 업무 자동화 리포트로 묶는 최종 프로젝트을 안전한 합성 fixture로 연습한다.
 
 ## 학습 목표

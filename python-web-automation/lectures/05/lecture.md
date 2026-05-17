@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 05 — 세션과 쿠키 상태 관리
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/05/[학생용] 레슨 05 — 세션과 쿠키 상태 관리.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. 학생은 셀을 위에서 아래로 실행하며 웹 자동화에서 상태가 어떻게 유지되고 화면 조작이 어떤 순서로 기록되는지 확인한다. 세션과 쿠키 상태 관리는 실제 사이트 대신 합성 fixture로 안전하게 연습한다.
 
 ## 학습 목표

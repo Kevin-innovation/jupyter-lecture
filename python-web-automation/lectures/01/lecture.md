@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 01 — 웹 자동화 개요 + HTTP + BeautifulSoup 입문
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/01/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2001%20%E2%80%94%20%EC%9B%B9%20%EC%9E%90%EB%8F%99%ED%99%94%20%EA%B0%9C%EC%9A%94%20%2B%20HTTP%20%2B%20BeautifulSoup%20%EC%9E%85%EB%AC%B8.ipynb)
-
 이 노트북은 파이썬 웹 자동화 코스의 첫 레슨이다. 1강에서는 실제 사이트를 무리하게 긁지 않고, 수업용으로 만든 정적 HTML 파일을 코랩에서 읽어 파싱한다. 목표는 '웹 페이지를 요청한다 → HTML을 읽는다 → 태그를 고른다 → 필요한 값을 표처럼 만든다' 흐름을 몸에 익히는 것이다.
 
 ## 학습 목표

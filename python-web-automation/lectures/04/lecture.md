@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 04 — 파일 다운로드와 폴더 정리
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/04/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2004%20%E2%80%94%20%ED%8C%8C%EC%9D%BC%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C%EC%99%80%20%ED%8F%B4%EB%8D%94%20%EC%A0%95%EB%A6%AC.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. 학생은 셀을 위에서 아래로 실행하며 입력 데이터가 어떤 구조로 바뀌는지 확인한다. 파일 다운로드와 폴더 정리는 실제 업무 자동화에서 자주 등장하는 반복 패턴을 합성 fixture로 안전하게 연습한다.
 
 ## 학습 목표

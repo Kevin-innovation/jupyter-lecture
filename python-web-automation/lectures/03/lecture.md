@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 03 — HTML 테이블과 리스트 데이터 정리
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/03/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2003%20%E2%80%94%20HTML%20%ED%85%8C%EC%9D%B4%EB%B8%94%EA%B3%BC%20%EB%A6%AC%EC%8A%A4%ED%8A%B8%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%A0%95%EB%A6%AC.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. 학생은 셀을 위에서 아래로 실행하며 입력 데이터가 어떤 구조로 바뀌는지 확인한다. HTML 테이블과 리스트 데이터 정리는 실제 업무 자동화에서 자주 등장하는 반복 패턴을 합성 fixture로 안전하게 연습한다.
 
 ## 학습 목표
@@ -73,7 +71,6 @@ def load_bytes(filename):
 
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
-
 
 print('colab:', IS_COLAB)
 print('data base:', DATA_BASE)

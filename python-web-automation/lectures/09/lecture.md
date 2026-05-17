@@ -13,8 +13,6 @@ jupyter:
 
 # 레슨 09 — 속도 제한, 재시도, 로그
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/09/[학생용] 레슨 09 — 속도 제한, 재시도, 로그.ipynb)
-
 이 노트북은 읽기와 따라하기용 강의 노트북이다. 자동화가 실패 응답을 만났을 때 무한 반복하지 않고, 요청 간격과 재시도 정책, 로그를 남기는 운영형 수집기을 안전한 합성 fixture로 연습한다.
 
 ## 학습 목표
