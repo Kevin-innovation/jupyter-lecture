@@ -13,19 +13,21 @@ jupyter:
 
 # 레슨 04 — 최종 미션 모범 답안
 
-> 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/04/%EB%A0%88%EC%8A%A8%2004%20%E2%80%94%20%ED%8C%8C%EC%9D%BC%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C%EC%99%80%20%ED%8F%B4%EB%8D%94%20%EC%A0%95%EB%A6%AC.ipynb)
 
-자료실 HTML과 manifest.csv를 기준으로 수업 자료를 그룹별 폴더에 저장하고 다운로드 로그를 만든다.
+자료실 HTML과 manifest.csv를 기준으로 파일을 저장하고, 저장 로그와 요약 파일을 만든다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
+import shutil
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter
+from urllib.parse import urljoin
 
 try:
     import requests
@@ -59,19 +61,28 @@ def load_bytes(filename):
         return response.content
     return Path(DATA_BASE, filename).read_bytes()
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
 
 def safe_filename(name):
-    return re.sub(r'[^A-Za-z0-9_.-]+', '_', str(name)).strip('_')
+    base = Path(str(name)).name
+    cleaned = re.sub(r'[^0-9A-Za-z가-힣_.-]+', '_', base).strip('._')
+    return cleaned or 'downloaded_file'
 
 def save_bytes(relative_path, target_dir):
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
-    filename = safe_filename(Path(relative_path).name)
+    filename = safe_filename(relative_path)
     target = target_dir / filename
     target.write_bytes(load_bytes(relative_path))
     return target
+
+def file_info(path):
+    path = Path(path)
+    return {'path': str(path), 'name': path.name, 'size': path.stat().st_size, 'exists': path.exists()}
 
 print('colab:', IS_COLAB)
 print('data base:', DATA_BASE)
@@ -80,64 +91,63 @@ print('data base:', DATA_BASE)
 ## 모범 답안
 
 ~~~python
+output_root = Path('downloads/lesson04/final')
+if output_root.exists():
+    shutil.rmtree(output_root)
+output_root.mkdir(parents=True, exist_ok=True)
+
+resource_soup = read_soup('resource_center.html')
+links = resource_soup.select('a.file-link')
 manifest = list(csv.DictReader(load_text('manifest.csv').splitlines()))
-logs = []
+manifest_paths = {row['path'] for row in manifest}
+link_paths = {link['href'] for link in links}
+missing_in_html = sorted(manifest_paths - link_paths)
+
+saved_rows = []
 for row in manifest:
-    path = save_bytes(row['path'], Path('downloads/lesson04/final') / row['group'])
-    logs.append({'file_name': row['file_name'], 'group': row['group'], 'saved_path': str(path), 'size': path.stat().st_size})
-with open('lesson04_download_log.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['file_name','group','saved_path','size'])
-    writer.writeheader(); writer.writerows(logs)
-print('logs:', len(logs))
-print('total bytes:', sum(row['size'] for row in logs))
+    target_dir = output_root / row['group']
+    target = save_bytes(row['path'], target_dir)
+    size = target.stat().st_size
+    saved_rows.append({
+        'file_name': row['file_name'],
+        'group': row['group'],
+        'type': row['type'],
+        'week': row['week'],
+        'source_path': row['path'],
+        'saved_path': str(target),
+        'size': size,
+        'status': 'saved' if size > 0 else 'empty',
+    })
+
+log_path = output_root / 'download_log.csv'
+with log_path.open('w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=['file_name', 'group', 'type', 'week', 'source_path', 'saved_path', 'size', 'status'])
+    writer.writeheader()
+    writer.writerows(saved_rows)
+
+summary = {
+    'html_links': len(links),
+    'manifest_rows': len(manifest),
+    'saved_files': len(saved_rows),
+    'empty_files': sum(1 for row in saved_rows if row['status'] == 'empty'),
+    'type_counts': dict(Counter(row['type'] for row in manifest)),
+    'group_counts': dict(Counter(row['group'] for row in manifest)),
+    'missing_in_html': missing_in_html,
+}
+summary_path = output_root / 'download_summary.json'
+summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
+print('log:', log_path, len(saved_rows))
+print('summary:', summary)
 ~~~
+
+## 왜 이 풀이가 기준 답안인지
+
+manifest를 기준으로 다운로드 대상을 정하고, HTML 링크와 manifest 경로를 비교해 누락을 확인한다. 저장은 group 기준 폴더로 분리하고, 각 파일의 크기와 상태를 로그로 남긴다. CSV 로그는 행 단위 검수에 적합하고 JSON 요약은 전체 파일 수와 유형별 개수를 빠르게 확인하는 데 적합하다.
 
 ## 채점 메모
 
-- 코드가 한 번 실행되어 산출물을 만들고, 다시 실행해도 같은 결과가 나와야 한다.
-- 결과 저장 경로, 수집 개수, 필터 조건이 요약 문장과 충돌하지 않아야 한다.
-- 실제 사이트로 옮길 때 필요한 요청 간격과 오류 처리 언급이 있어야 한다.
-
-### 보강 설명 1
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 2
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 3
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 4
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 5
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 7
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 8
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 9
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 10
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 11
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+- manifest 행 수와 saved_rows 길이가 같아야 한다.
+- empty_files가 0이어야 한다.
+- download_log.csv에는 header와 모든 행이 있어야 한다.
+- download_summary.json에는 type_counts와 group_counts가 있어야 한다.
+- 실제 사이트 확장 전 최대 파일 수, 요청 간격, 저장 권한 기준을 설명할 수 있어야 한다.

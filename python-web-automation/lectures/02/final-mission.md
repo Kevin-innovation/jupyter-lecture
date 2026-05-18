@@ -13,71 +13,39 @@ jupyter:
 
 # 레슨 02 — 최종 미션
 
-3페이지로 나뉜 자료실 검색 결과를 모두 수집해 CSV 리포트를 만든다.
+여러 페이지로 나뉜 자료실 검색 결과를 읽어 운영자가 확인할 수 있는 CSV를 만든다. 이번 미션은 실제 사이트 요청 없이 search_page_1.html부터 search_page_3.html까지의 fixture만 사용한다.
 
-## 0. 환경 셀
+## 시나리오
 
-~~~python
-import os
-import re
-import time
-import csv
-from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+학원 운영자가 수업 자료실에서 자동화 관련 자료를 모아보고 싶어 한다. 검색 결과는 페이지별 HTML로 저장되어 있고, 검색 계획은 search_targets.csv에 있다. 학생은 URL 조건을 읽고, 페이지별 검색 결과를 파싱하고, 조회수 기준으로 중요한 자료를 추려 CSV로 저장해야 한다.
 
-try:
-    import requests
-    from bs4 import BeautifulSoup
-except ImportError:
-    import sys, subprocess
-    subprocess.check_call([sys.executable, '-m', 'pip', '-q', 'install', 'requests', 'beautifulsoup4'])
-    import requests
-    from bs4 import BeautifulSoup
+## 필수 요구사항
 
-IS_COLAB = 'COLAB_GPU' in os.environ or 'COLAB_TPU_ADDR' in os.environ
-if IS_COLAB:
-    DATA_BASE = 'https://raw.githubusercontent.com/Kevin-innovation/jupyter-lecture/main/python-web-automation/lectures/02/data'
-else:
-    DATA_BASE = './data'
+1. search_targets.csv를 읽어 검색어, 카테고리, 최소 조회수, 최대 페이지 수를 확인한다.
+2. search_page_1.html부터 search_page_3.html까지 순회한다.
+3. 각 카드에서 제목, 카테고리, 날짜, 조회수, 상세 URL을 추출한다.
+4. 상대 링크는 https://example.com 기준의 절대 URL로 변환한다.
+5. 조회수가 기준 이상인 자료만 별도 리스트로 만든다.
+6. 전체 결과와 필터링 결과를 CSV로 저장한다.
 
-def load_text(filename):
-    if DATA_BASE.startswith('http'):
-        url = f'{DATA_BASE}/{filename}'
-        response = requests.get(url, timeout=10, headers={'User-Agent': 'D-Lab-Lesson/1.0'})
-        response.raise_for_status()
-        response.encoding = response.encoding or 'utf-8'
-        return response.text
-    return Path(DATA_BASE, filename).read_text(encoding='utf-8')
+## 보너스 요구사항
 
-def load_bytes(filename):
-    if DATA_BASE.startswith('http'):
-        url = f'{DATA_BASE}/{filename}'
-        response = requests.get(url, timeout=10, headers={'User-Agent': 'D-Lab-Lesson/1.0'})
-        response.raise_for_status()
-        return response.content
-    return Path(DATA_BASE, filename).read_bytes()
-
-def clean_int(text):
-    return int(re.sub(r'[^0-9]', '', str(text)))
-
-
-print('colab:', IS_COLAB)
-print('data base:', DATA_BASE)
-~~~
+- 카테고리별 자료 개수와 평균 조회수를 출력한다.
+- pagination의 a.next 링크를 읽어 다음 페이지 번호를 확인하는 함수를 만든다.
 
 ## 제출 산출물
 
 - 실행 가능한 노트북
-- 결과 CSV 또는 정리 파일
+- 결과 CSV 1개 이상
 - 자동화 결과 요약 3문장
-- 안전 규칙 점검 메모 2개
+- 실제 사이트로 확장할 때 지킬 안전 규칙 2개
 
 ## 스타터 코드
 
 ~~~python
-# page_filename 함수와 rows 누적 코드를 완성한다
-rows = []
-# TODO
+# 여러 페이지를 순회해 summary_rows를 만든다.
+summary_rows = []
+# TODO: search_targets.csv를 읽고, HTML fixture를 파싱하고, CSV로 저장한다.
 ~~~
 
 ## 자동화 결과 요약
@@ -86,62 +54,65 @@ rows = []
 - 핵심 결과:
 - 다음 실행 때 조심할 점:
 
-### 보강 설명 1
+---
 
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+## 수행 순서 제안
 
-### 보강 설명 2
+1. search_targets.csv를 먼저 출력해 검색 계획의 컬럼을 확인한다.
+2. parse_result_card 함수를 만들어 카드 하나를 같은 구조의 딕셔너리로 바꾼다.
+3. page_filename 함수로 1~3페이지 파일명을 만든다.
+4. 모든 페이지를 순회해 all_rows를 만든다.
+5. 조회수 기준으로 filtered_rows를 만든다.
+6. 두 결과를 CSV로 저장한다.
+7. 마지막에 수집 대상, 핵심 결과, 다음 실행 때 조심할 점을 3문장으로 정리한다.
 
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+## 평가 루브릭
 
-### 보강 설명 3
+| 항목 | 통과 기준 |
+|---|---|
+| URL 구조 이해 | query string을 표준 함수로 분해하거나 조립한다. |
+| 반복 단위 | article.result-card를 기준으로 모든 페이지를 순회한다. |
+| 데이터 정리 | 제목, 카테고리, 날짜, 조회수, URL이 같은 key 구조로 저장된다. |
+| 안전 기준 | 실제 사이트에 요청하지 않고 fixture만 사용한다. |
+| CSV 저장 | 헤더가 있는 CSV를 만들고 저장 행 수를 출력한다. |
+| 설명 | 결과 요약과 다음 실행 시 주의할 점을 작성한다. |
 
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+## 감점 기준
 
-### 보강 설명 4
+- 실제 사이트 URL을 반복 요청한다.
+- 첫 페이지 데이터만 저장한다.
+- 조회수를 문자열로 둔 채 필터링한다.
+- 상대 링크를 그대로 저장한다.
+- CSV 헤더 없이 문자열을 직접 이어 붙여 저장한다.
+- 결과 요약 없이 코드 실행 결과만 제출한다.
 
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+## 제출 전 검증
 
-### 보강 설명 5
+최종 제출 전에는 all_rows의 길이, filtered_rows의 길이, CSV 파일명, 첫 행의 key 목록을 출력한다. 이 네 가지가 확인되면 선생님이 파일을 열기 전에 구조 오류를 빠르게 찾을 수 있다.
 
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+---
 
-### 보강 설명 6
+## 결과 요약 예시 형식
 
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+아래 형식을 참고하되 숫자와 문장은 본인이 실행한 결과에 맞게 적는다.
 
-### 보강 설명 7
+- 수집 대상: 수업용 자료실 검색 fixture 3페이지를 순회했다.
+- 핵심 결과: 전체 결과와 조회수 기준 필터링 결과를 CSV로 저장했다.
+- 다음 실행 때 조심할 점: 실제 사이트에서는 요청 간격, robots 정책, 개인정보 포함 여부를 먼저 확인해야 한다.
 
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+## 선생님 확인 항목
 
-### 보강 설명 8
+- 학생이 실제 사이트를 호출하지 않았는가?
+- 결과 CSV에 header가 있는가?
+- 상대 URL이 절대 URL로 변환되었는가?
+- 조회수 비교 전에 정수 변환이 되었는가?
+- 페이지 1~3을 모두 순회했는가?
+- 결과 요약이 코드 실행 결과와 일치하는가?
 
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+최종 미션은 코드만 제출하는 과제가 아니다. 운영자가 다시 실행할 수 있는 자동화 절차를 만들고, 그 결과를 짧은 문장으로 설명하는 과제다.
 
-### 보강 설명 9
+---
 
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+## 확장 아이디어
 
-### 보강 설명 10
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 11
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 12
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 13
-
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 14
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 15
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+시간이 남으면 category별 CSV를 따로 저장해본다. 예를 들어 python 자료만 lesson02_python.csv로 저장하고, web 자료만 lesson02_web.csv로 저장한다. 이 확장은 실제 운영에서 담당자별 자료 목록을 나누어 전달하는 상황과 연결된다.

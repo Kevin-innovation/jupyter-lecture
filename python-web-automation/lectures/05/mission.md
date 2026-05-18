@@ -13,23 +13,25 @@ jupyter:
 
 # 레슨 05 — 실습 문제
 
-세션과 쿠키 상태 관리 레슨의 학생용 문제 노트북이다. 강의 노트북을 먼저 실행한 뒤 빈칸을 직접 채운다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/05/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2005%20%E2%80%94%20%EC%84%B8%EC%85%98%EA%B3%BC%20%EC%BF%A0%ED%82%A4%20%EC%83%81%ED%83%9C%20%EA%B4%80%EB%A6%AC.ipynb)
+
+세션과 쿠키 상태 관리 레슨의 학생용 문제 노트북이다. 강의 노트북을 먼저 실행한 뒤 빈칸을 직접 채운다. 문제는 로그인 폼 구조 확인에서 시작해 쿠키 필터, 장바구니 상태, 이벤트 로그, 안전한 요약 저장까지 이어진다.
 
 ## 통과 기준
 
 - 총 15문제 중 12문제 이상 정상 출력이면 통과.
-- 문제 1~5는 구조 확인, 6~10은 상태 변화와 반복 처리, 11~15는 로그와 저장이다.
-- 정답값은 적지 않는다. 출력 형태와 fixture 구조를 보고 직접 판단한다.
+- 문제 1~4는 로그인 폼과 세션 생성, 5~10은 카탈로그와 장바구니 상태, 11~15는 정책과 이벤트 로그 저장이다.
+- 정답값과 완성 코드는 적지 않는다. 출력 형태, 상태 변화, 저장 파일 이름을 보고 직접 판단한다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter, defaultdict
 
 try:
     import requests
@@ -55,30 +57,61 @@ def load_text(filename):
         return response.text
     return Path(DATA_BASE, filename).read_text(encoding='utf-8')
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
+
+def read_csv_rows(filename):
+    return list(csv.DictReader(load_text(filename).splitlines()))
 
 class DemoSession:
     def __init__(self):
         self.client = requests.Session()
         self.cart = []
         self.log = []
+
     def login(self, username, token):
         if token != 'safe-token-05':
             raise ValueError('invalid token')
         self.client.cookies.set('demo_user', username)
         self.client.cookies.set('session_id', 'demo-session-05')
         self.log.append({'event': 'login', 'user': username})
+
+    def logout(self):
+        self.client.cookies.clear()
+        self.log.append({'event': 'logout'})
+
     def set_filter(self, name, value):
         self.client.cookies.set(f'filter_{name}', str(value))
         self.log.append({'event': 'filter', 'name': name, 'value': str(value)})
+
     def add_to_cart(self, product_id, quantity=1):
-        self.cart.append({'product_id': product_id, 'quantity': int(quantity)})
-        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': int(quantity)})
+        quantity = int(quantity)
+        self.cart.append({'product_id': product_id, 'quantity': quantity})
+        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': quantity})
+
+    def remove_from_cart(self, product_id, quantity=1):
+        quantity = int(quantity)
+        remaining = quantity
+        new_cart = []
+        for item in self.cart:
+            if item['product_id'] == product_id and remaining > 0:
+                removed = min(item['quantity'], remaining)
+                item = {**item, 'quantity': item['quantity'] - removed}
+                remaining -= removed
+            if item['quantity'] > 0:
+                new_cart.append(item)
+        self.cart = new_cart
+        self.log.append({'event': 'remove', 'product_id': product_id, 'quantity': quantity - remaining})
+
     def is_logged_in(self):
         return self.client.cookies.get('session_id') is not None
+
     def cookies(self):
         return self.client.cookies.get_dict()
+
     def cart_count(self):
         return sum(item['quantity'] for item in self.cart)
 
@@ -90,11 +123,11 @@ print('data base:', DATA_BASE)
 
 ## 문제 1 — 로그인 폼 제목 읽기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+login_form.html을 읽고 h1 제목을 출력한다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 로그인 폼 제목이 한 줄로 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: 파일은 load_text로 읽고 BeautifulSoup으로 파싱한다.
 
 ~~~python
 form_html = ____(____)
@@ -106,11 +139,11 @@ print(soup.____('____').text.strip())
 
 ## 문제 2 — hidden CSRF 토큰 읽기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+로그인 폼의 hidden input에서 csrf_token 값을 읽는다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: safe-token-05 값이 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: input[name="csrf_token"]의 value 속성을 읽는다.
 
 ~~~python
 token = soup.select_one('input[name="____"]')['____']
@@ -121,11 +154,11 @@ print(token)
 
 ## 문제 3 — 폼 입력 name 목록 추출
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+로그인 폼 안의 input name 값을 모두 리스트로 만든다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: csrf_token, username, password가 포함된 리스트가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: input 태그를 모두 선택하고 get("name")을 사용한다.
 
 ~~~python
 inputs = soup.select('____')
@@ -137,11 +170,11 @@ print(names)
 
 ## 문제 4 — DemoSession 생성과 로그인
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+DemoSession 객체를 만들고 token으로 로그인 상태를 만든다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 로그인 여부와 쿠키 딕셔너리가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: login 메서드는 username과 token을 받는다.
 
 ~~~python
 session = ____()
@@ -154,11 +187,11 @@ print(session.____())
 
 ## 문제 5 — 카탈로그 카드 개수 세기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+catalog_page.html에서 상품 카드 반복 단위를 선택한다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 상품 카드 개수가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: 상품 반복 단위는 article.product-card다.
 
 ~~~python
 catalog = BeautifulSoup(load_text('____'), 'html.parser')
@@ -170,11 +203,11 @@ print(len(cards))
 
 ## 문제 6 — 첫 상품 정보 읽기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+첫 상품의 id, 이름, 가격 속성을 읽는다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 상품 id, 상품명, data-price가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: id와 가격은 data 속성, 이름은 .name 텍스트다.
 
 ~~~python
 first = cards[____]
@@ -187,11 +220,11 @@ print(first['____'])
 
 ## 문제 7 — 카테고리 필터 쿠키 저장
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+세션에 category 필터를 book으로 저장한다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: filter_category 쿠키 값이 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: set_filter는 name과 value를 받는다.
 
 ~~~python
 session.____('category', 'book')
@@ -202,11 +235,11 @@ print(session.cookies()['____'])
 
 ## 문제 8 — 필터에 맞는 상품만 선택
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+쿠키에 저장된 category와 같은 상품 카드만 고른다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 선택된 상품 개수와 첫 상품명이 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: card의 data-category와 filter_category 쿠키를 비교한다.
 
 ~~~python
 selected = [card for card in cards if card['____'] == session.cookies()['____']]
@@ -218,195 +251,178 @@ print(selected[0].select_one('____').text.strip())
 
 ## 문제 9 — 장바구니에 상품 담기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+필터링된 첫 상품을 장바구니에 2개 담는다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: cart 리스트와 cart_count가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: add_to_cart에는 product_id와 quantity를 넘긴다.
 
 ~~~python
-session.____(selected[0]['____'], quantity=2)
-print(session.____())
+session.____(selected[0]['____'], quantity=____)
 print(session.cart)
+print(session.____())
 ~~~
 
 ---
 
-## 문제 10 — 상품 id로 가격 찾기
+## 문제 10 — 장바구니 금액 계산
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+카탈로그 가격표를 만들고 장바구니 총액을 계산한다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 상품별 라인과 총액이 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
-
-~~~python
-price_map = {card['data-product-id']: ____(card['____']) for card in cards}
-print(price_map[session.cart[0]['____']])
-~~~
-
----
-
-## 문제 11 — 장바구니 총액 계산
-
-지시된 값을 코드로 추출하거나 상태를 변경한다.
-
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
-
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: data-price는 int로 변환해 가격표에 저장한다.
 
 ~~~python
-total = 0
-for item in session.cart:
-    total += price_map[item['____']] * item['____']
+price_by_id = {card['data-product-id']: int(card['____']) for card in cards}
+name_by_id = {card['data-product-id']: card.select_one('____').text.strip() for card in cards}
+total = sum(price_by_id[item['____']] * item['____'] for item in session.cart)
 print(total)
+~~~
+
+---
+
+## 문제 11 — 쿠키 정책 문장 읽기
+
+cookie_policy.txt를 줄 단위로 읽어 빈 줄을 제외한다.
+
+**기대 결과 형태**: 정책 문장 리스트 또는 줄 출력이 나온다.
+
+**빈칸 힌트**: splitlines와 strip을 사용한다.
+
+~~~python
+policy_lines = [line.strip() for line in load_text('____').splitlines() if line.____()]
+print(policy_lines)
 ~~~
 
 ---
 
 ## 문제 12 — 세션 이벤트 CSV 읽기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+session_events.csv를 읽고 이벤트별 개수를 센다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 이벤트 rows 일부와 event counts가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: read_csv_rows와 Counter를 사용한다.
 
 ~~~python
-events = list(csv.DictReader(load_text('____').splitlines()))
-print(len(events))
-print(events[0]['____'])
+events = ____(____)
+print(events[:3])
+print(Counter(row['____'] for row in events))
 ~~~
 
 ---
 
-## 문제 13 — add 이벤트만 필터링
+## 문제 13 — 이벤트 로그 재생하기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+CSV 이벤트를 DemoSession에 순서대로 적용해 장바구니 상태를 만든다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 재생 후 cart와 cart_count가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: add와 remove 이벤트만 장바구니에 반영한다.
 
 ~~~python
-adds = [row for row in events if row['____'] == 'add']
-print(len(adds))
-print([row['product_id'] for row in adds])
+replay = DemoSession()
+replay.login('replay-user', token)
+for row in events:
+    if row['event'] == 'add':
+        replay.____(row['product_id'], int(row['quantity']))
+    elif row['event'] == 'remove':
+        replay.____(row['product_id'], int(row['quantity']))
+print(replay.cart)
+print(replay.____())
 ~~~
 
 ---
 
-## 문제 14 — 쿠키 정책 줄 수 확인
+## 문제 14 — 세션 로그 CSV 저장하기
 
-지시된 값을 코드로 추출하거나 상태를 변경한다.
+session.log를 outputs/lesson05/session_log.csv로 저장한다.
 
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
+**기대 결과 형태**: 저장 경로와 로그 행 수가 출력된다.
 
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
-
-~~~python
-policy = load_text('____')
-lines = [line for line in policy.splitlines() if line.strip()]
-print(len(____))
-print(lines[0])
-~~~
-
----
-
-## 문제 15 — 세션 로그 CSV 저장
-
-지시된 값을 코드로 추출하거나 상태를 변경한다.
-
-**기대 결과 형태**: 요구한 값이 한 줄 또는 리스트/딕셔너리 형태로 출력된다.
-
-**빈칸 힌트**: HTML 구조, CSV 헤더, 이전 예제를 확인한 뒤 `____` 부분을 직접 채운다.
+**빈칸 힌트**: DictWriter fieldnames는 로그 key 전체에서 만든다.
 
 ~~~python
-with open('lesson05_session_log.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['event', 'user', 'name', 'value', 'product_id', 'quantity'])
+output_dir = Path('outputs/lesson05')
+output_dir.mkdir(parents=True, exist_ok=True)
+log_path = output_dir / 'session_log.csv'
+fieldnames = sorted({key for row in session.log for key in row.keys()})
+with log_path.open('w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=____)
     writer.____()
-    writer.____(session.log)
-print('saved:', len(session.log))
+    writer.writerows(session.log)
+print(log_path, len(session.log))
 ~~~
 
 ---
 
-### 보강 설명 1
+## 문제 15 — 상태 요약 JSON 저장하기
 
-레슨 05 실습 문제은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
+로그인 여부, 쿠키 key, cart_count, 정책 문장 수를 JSON으로 저장한다.
 
-### 보강 설명 2
+**기대 결과 형태**: 요약 딕셔너리와 저장 경로가 출력된다.
 
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+**빈칸 힌트**: 쿠키 값 전체가 아니라 key 목록만 저장한다.
 
-### 보강 설명 3
+~~~python
+summary = {'logged_in': session.____(), 'cookie_keys': sorted(session.cookies().____()), 'cart_count': session.____(), 'policy_count': len(policy_lines)}
+summary_path = output_dir / 'session_summary.json'
+summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
+print(____)
+print(summary_path)
+~~~
 
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
+---
 
-### 보강 설명 4
+## 문제 풀이 기준
 
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
+| 구간 | 목표 | 확인할 것 |
+|---|---|---|
+| 문제 1~4 | 로그인 폼과 세션 상태 | h1, csrf_token, input name, 쿠키 |
+| 문제 5~8 | 카탈로그와 필터 | product-card, data-category, filter_category |
+| 문제 9~10 | 장바구니 상태 | product_id, quantity, total |
+| 문제 11~13 | 정책과 이벤트 | cookie_policy, session_events, replay |
+| 문제 14~15 | 산출물 저장 | session_log.csv, session_summary.json |
 
-### 보강 설명 5
+세션 문제는 실행 순서가 중요하다. session을 만들기 전에 session.set_filter를 실행할 수 없고, token을 읽기 전에 login을 호출할 수 없다. 오류가 나면 셀을 부분 실행하지 말고 환경 셀부터 순서대로 다시 실행한다.
 
-레슨 05 실습 문제은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
+## 오류가 났을 때 확인 순서
 
-### 보강 설명 6
+1. NameError가 나면 이전 셀을 실행했는지 확인한다.
+2. ValueError가 나면 token 값이 safe-token-05인지 확인한다.
+3. KeyError가 나면 쿠키 key 또는 카드 data 속성 이름을 확인한다.
+4. cart_count가 예상과 다르면 add/remove 이벤트 순서를 확인한다.
+5. JSON 저장 오류가 나면 summary 안에 직렬화할 수 없는 객체가 있는지 확인한다.
 
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+## 제출 전 자체 점검
 
-### 보강 설명 7
+- 실제 계정, 실제 쿠키, 비밀번호를 코드나 로그에 넣지 않았는가.
+- outputs/lesson05/session_log.csv가 생성되는가.
+- outputs/lesson05/session_summary.json이 생성되는가.
+- JSON에는 쿠키 값 전체가 아니라 cookie_keys만 저장되는가.
+- 이벤트 로그를 재생했을 때 장바구니 수량이 설명 가능한가.
+- 새 런타임에서 전체 실행해도 같은 결과가 나오는가.
 
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
+## 빈칸 난이도 안내
 
-### 보강 설명 8
+| 문제 | 난이도 | 막혔을 때 확인할 곳 |
+|---:|---|---|
+| 1~3 | 기본 | login_form.html의 h1, input, name 속성 |
+| 4~8 | 중간 | DemoSession 메서드와 catalog product-card 구조 |
+| 9~10 | 중간 | cart 리스트, data-price, product_id |
+| 11~13 | 중간+ | cookie_policy.txt, session_events.csv, add/remove 순서 |
+| 14~15 | 종합 | DictWriter, JSON 저장, cookie_keys 안전 요약 |
 
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
+세션 문제는 빈칸 하나가 맞아도 이전 상태가 없으면 실행되지 않는다. 특히 session, token, cards, policy_lines, output_dir 같은 변수는 앞 문제에서 만들어진다. 중간부터 실행했다면 위쪽 셀을 다시 실행한다.
 
-### 보강 설명 9
+## 상태 관리 안전선
 
-레슨 05 실습 문제은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
+이번 레슨에서는 실제 사이트 로그인, 실제 브라우저 쿠키 복사, 비밀번호 저장을 하지 않는다. DemoSession은 세션 개념을 설명하기 위한 모형이다. 코드가 잘 실행되더라도 실제 서비스의 쿠키를 가져오거나 저장하도록 바꾸면 수업 기준을 벗어난다.
 
-### 보강 설명 10
+산출물에는 쿠키 key 목록만 남긴다. cookie value, token 원문, session_id 원문, 비밀번호는 저장하지 않는다. 학생이 디버깅을 위해 화면에 잠깐 출력하는 것도 실제 서비스에서는 조심해야 한다.
 
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+## 산출물 이름 기준
 
-### 보강 설명 11
+최종적으로 만드는 파일 이름은 문제와 정확히 맞춘다. CSV 로그는 outputs/lesson05/session_log.csv, JSON 요약은 outputs/lesson05/session_summary.json이다. 이름이 다르면 검수자가 결과를 찾기 어렵고, 다음 자동화 단계에서 파일을 재사용하기도 어렵다.
 
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 12
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
-
-### 보강 설명 13
-
-레슨 05 실습 문제은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 14
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
-
-### 보강 설명 15
-
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 16
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
-
-### 보강 설명 17
-
-레슨 05 실습 문제은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 18
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
-
-### 보강 설명 19
-
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 20
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.

@@ -13,11 +13,11 @@ jupyter:
 
 # 레슨 02 — 최종 미션 모범 답안
 
-> 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
+> 교사·관리자 전용. 학생에게 배포 금지.
 
-3페이지로 나뉜 자료실 검색 결과를 모두 수집해 CSV 리포트를 만든다.
+이 답안은 URL 파라미터, 페이지 반복, 상대 URL 변환, 필터링, CSV 저장을 한 흐름으로 묶는다.
 
-## 0. 환경 셀
+## 모범 답안
 
 ~~~python
 import os
@@ -62,78 +62,75 @@ def load_bytes(filename):
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
 
+def page_filename(page):
+    return f'search_page_{page}.html'
 
 print('colab:', IS_COLAB)
 print('data base:', DATA_BASE)
-~~~
 
-## 모범 답안
+def parse_result_card(card, base='https://example.com'):
+    link = card.select_one('.title a')
+    return {
+        'title': link.text.strip(),
+        'category': card['data-category'],
+        'page': int(card['data-page']),
+        'rank': int(card['data-rank']),
+        'date': card.select_one('time')['datetime'],
+        'views': clean_int(card.select_one('.views').text),
+        'url': urljoin(base, link['href']),
+        'detail_url': urljoin(base, card.select_one('a.detail')['href']),
+    }
 
-~~~python
-def page_filename(page):
-    return f'search_page_{page}.html'
-rows = []
+target_rows = list(csv.DictReader(load_text('search_targets.csv').splitlines()))
+all_rows = []
 for page in range(1, 4):
-    soup = BeautifulSoup(load_text(page_filename(page)), 'html.parser')
-    for card in soup.select('article.result-card'):
-        rows.append({'title': card.select_one('.title a').text.strip(), 'category': card['data-category'], 'views': clean_int(card.select_one('.views').text), 'url': urljoin('https://example.com', card.select_one('.title a')['href'])})
-with open('lesson02_final_results.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['title', 'category', 'views', 'url'])
-    writer.writeheader(); writer.writerows(rows)
-print('rows:', len(rows))
-print('high_view:', len([row for row in rows if row['views'] >= 1000]))
+    page_soup = BeautifulSoup(load_text(page_filename(page)), 'html.parser')
+    for card in page_soup.select('article.result-card'):
+        all_rows.append(parse_result_card(card))
+
+min_views_by_category = {row['category']: int(row['min_views']) for row in target_rows}
+filtered_rows = [row for row in all_rows if row['views'] >= min_views_by_category.get(row['category'], 0)]
+
+fieldnames = ['title', 'category', 'page', 'rank', 'date', 'views', 'url', 'detail_url']
+with open('lesson02_all_results.csv', 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(all_rows)
+
+with open('lesson02_filtered_results.csv', 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(filtered_rows)
+
+category_summary = {}
+for row in all_rows:
+    item = category_summary.setdefault(row['category'], {'count': 0, 'views': 0})
+    item['count'] += 1
+    item['views'] += row['views']
+
+for category, item in category_summary.items():
+    print(category, item['count'], round(item['views'] / item['count'], 1))
+print('all:', len(all_rows))
+print('filtered:', len(filtered_rows))
 ~~~
+
+## 왜 이 답안이 기준을 충족하는가
+
+- 검색 조건과 페이지 파일명을 코드에서 분리해 다음 실행 때 수정 지점이 분명하다.
+- 카드 하나를 딕셔너리로 바꾸는 함수를 만들어 전체 페이지 반복에서도 같은 구조를 유지한다.
+- 상대 링크를 절대 URL로 변환해 CSV만 열어도 이동 가능한 링크가 남는다.
+- 저장 전 필터링 기준을 search_targets.csv에서 읽어 운영자가 조건을 파일로 조정할 수 있다.
 
 ## 채점 메모
 
-- 코드가 한 번 실행되어 산출물을 만들고, 다시 실행해도 같은 결과가 나와야 한다.
-- 결과 저장 경로, 수집 개수, 필터 조건이 요약 문장과 충돌하지 않아야 한다.
-- 실제 사이트로 옮길 때 필요한 요청 간격과 오류 처리 언급이 있어야 한다.
+- 학생 답안이 결과를 맞히더라도 URL 변환, 조회수 정수 변환, CSV 헤더가 빠졌으면 감점한다.
+- 실제 사이트 URL을 직접 반복 요청한 답안은 이 레슨 기준에서 실패로 본다.
+- 필터링 기준을 코드에 하드코딩했더라도 기본 동작은 인정하되, 검색 계획 CSV를 읽지 않았다면 운영 자동화 관점에서 감점한다.
 
-### 보강 설명 1
+---
 
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+## 운영 해설
 
-### 보강 설명 2
+이 최종 답안은 검색 계획 파일과 페이지 fixture를 분리해 둔다. 운영자가 검색 조건을 바꾸고 싶을 때는 search_targets.csv만 수정하면 되고, 카드 파싱 로직은 유지된다. 실제 사이트로 확장할 때도 이 구조를 유지하면 요청 대상, 반복 범위, 저장 결과를 따로 검토할 수 있다.
 
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 3
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 4
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 5
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 7
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 8
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 9
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 10
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 11
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 12
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+학생 답안을 볼 때는 filtered_rows의 개수보다 필터링 기준이 어디에서 왔는지를 먼저 확인한다. 기준을 코드 안에 숫자로 고정해도 예제는 맞을 수 있지만, 운영 자동화에서는 조건을 파일이나 설정으로 분리하는 편이 재사용성이 높다.

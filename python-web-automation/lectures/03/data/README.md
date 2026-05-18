@@ -1,23 +1,20 @@
 # 레슨 03 데이터
 
-class_dashboard.html은 table 구조, feedback_cards.html은 card 구조, todo_list.html은 list 구조를 연습하기 위한 합성 fixture다. rubric.csv는 최종 산출물 평가 기준이다.
+이 폴더는 HTML 테이블과 리스트 데이터 정리 수업용 합성 fixture를 담고 있다. 실제 학생 개인정보나 외부 사이트 데이터는 포함하지 않는다.
 
-### 보강 설명 1
+## 파일 구성
 
-레슨 03 데이터은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+| 파일 | 용도 |
+|---|---|
+| class_dashboard.html | 학생별 course, progress, submissions, passed, minutes, status를 담은 table 예제 |
+| feedback_cards.html | article.feedback-card 구조와 data-priority 속성을 읽는 카드형 UI 예제 |
+| todo_list.html | li.todo-item 구조와 data-status 속성을 읽는 리스트형 UI 예제 |
+| rubric.csv | 최종 미션 평가 기준과 배점 예제 |
 
-### 보강 설명 2
+## 수업 기준
 
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 3
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 4
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 5
-
-레슨 03 데이터은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+- table은 thead th를 먼저 읽고 tbody tr을 반복한다.
+- card는 article.feedback-card 하나가 완성된 데이터 단위다.
+- list는 li.todo-item을 반복하고 data-status를 함께 읽는다.
+- progress, submissions, passed, minutes, max_score는 계산 전에 숫자로 변환한다.
+- 실제 사이트로 확장할 때는 약관, robots.txt, 개인정보 여부, 요청 간격을 먼저 확인한다.

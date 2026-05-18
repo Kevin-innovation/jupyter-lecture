@@ -13,19 +13,19 @@ jupyter:
 
 # 레슨 05 — 최종 미션 모범 답안
 
-> 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/05/%EB%A0%88%EC%8A%A8%2005%20%E2%80%94%20%EC%84%B8%EC%85%98%EA%B3%BC%20%EC%BF%A0%ED%82%A4%20%EC%83%81%ED%83%9C%20%EA%B4%80%EB%A6%AC.ipynb)
 
-로그인 폼, 카탈로그, 세션 이벤트를 사용해 안전한 세션 상태 리포트를 만든다.
+로그인 폼, 카탈로그, 쿠키 정책, 세션 이벤트 CSV를 사용해 안전한 세션 상태 요약을 만든다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter, defaultdict
 
 try:
     import requests
@@ -51,30 +51,61 @@ def load_text(filename):
         return response.text
     return Path(DATA_BASE, filename).read_text(encoding='utf-8')
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
+
+def read_csv_rows(filename):
+    return list(csv.DictReader(load_text(filename).splitlines()))
 
 class DemoSession:
     def __init__(self):
         self.client = requests.Session()
         self.cart = []
         self.log = []
+
     def login(self, username, token):
         if token != 'safe-token-05':
             raise ValueError('invalid token')
         self.client.cookies.set('demo_user', username)
         self.client.cookies.set('session_id', 'demo-session-05')
         self.log.append({'event': 'login', 'user': username})
+
+    def logout(self):
+        self.client.cookies.clear()
+        self.log.append({'event': 'logout'})
+
     def set_filter(self, name, value):
         self.client.cookies.set(f'filter_{name}', str(value))
         self.log.append({'event': 'filter', 'name': name, 'value': str(value)})
+
     def add_to_cart(self, product_id, quantity=1):
-        self.cart.append({'product_id': product_id, 'quantity': int(quantity)})
-        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': int(quantity)})
+        quantity = int(quantity)
+        self.cart.append({'product_id': product_id, 'quantity': quantity})
+        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': quantity})
+
+    def remove_from_cart(self, product_id, quantity=1):
+        quantity = int(quantity)
+        remaining = quantity
+        new_cart = []
+        for item in self.cart:
+            if item['product_id'] == product_id and remaining > 0:
+                removed = min(item['quantity'], remaining)
+                item = {**item, 'quantity': item['quantity'] - removed}
+                remaining -= removed
+            if item['quantity'] > 0:
+                new_cart.append(item)
+        self.cart = new_cart
+        self.log.append({'event': 'remove', 'product_id': product_id, 'quantity': quantity - remaining})
+
     def is_logged_in(self):
         return self.client.cookies.get('session_id') is not None
+
     def cookies(self):
         return self.client.cookies.get_dict()
+
     def cart_count(self):
         return sum(item['quantity'] for item in self.cart)
 
@@ -85,53 +116,80 @@ print('data base:', DATA_BASE)
 ## 모범 답안
 
 ~~~python
-form_html = load_text('login_form.html')
-soup = BeautifulSoup(form_html, 'html.parser')
-token = soup.select_one('input[name="csrf_token"]')['value']
+output_dir = Path('outputs/lesson05/final')
+output_dir.mkdir(parents=True, exist_ok=True)
+
+form_soup = read_soup('login_form.html')
+token = form_soup.select_one('input[name="csrf_token"]')['value']
+input_names = [tag.get('name') for tag in form_soup.select('input')]
+
+catalog_soup = read_soup('catalog_page.html')
+products = []
+for card in catalog_soup.select('article.product-card'):
+    products.append({
+        'product_id': card['data-product-id'],
+        'category': card['data-category'],
+        'price': int(card['data-price']),
+        'name': card.select_one('.name').text.strip(),
+    })
+price_by_id = {product['product_id']: product['price'] for product in products}
+
 session = DemoSession()
-session.login('student01', token)
+session.login('final-user', token)
 session.set_filter('category', 'book')
-catalog = BeautifulSoup(load_text('catalog_page.html'), 'html.parser')
-cards = catalog.select('article.product-card')
-selected = [card for card in cards if card['data-category'] == session.cookies()['filter_category']]
-for card in selected[:2]:
-    session.add_to_cart(card['data-product-id'], quantity=1)
-price_map = {card['data-product-id']: clean_int(card['data-price']) for card in cards}
-total = sum(price_map[item['product_id']] * item['quantity'] for item in session.cart)
-with open('lesson05_session_report.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['event','user','name','value','product_id','quantity'])
-    writer.writeheader(); writer.writerows(session.log)
-print('logged_in:', session.is_logged_in())
-print('cart_count:', session.cart_count())
-print('total:', total)
+for product in products:
+    if product['category'] == session.cookies()['filter_category']:
+        session.add_to_cart(product['product_id'], 1)
+        break
+session.add_to_cart('kit-1', 1)
+
+policy_lines = [line.strip() for line in load_text('cookie_policy.txt').splitlines() if line.strip()]
+events = read_csv_rows('session_events.csv')
+replay = DemoSession()
+replay.login('replay-user', token)
+for row in events:
+    if row['event'] == 'filter':
+        replay.set_filter('category', row['product_id'])
+    elif row['event'] == 'add':
+        replay.add_to_cart(row['product_id'], int(row['quantity']))
+    elif row['event'] == 'remove':
+        replay.remove_from_cart(row['product_id'], int(row['quantity']))
+    elif row['event'] == 'logout':
+        replay.logout()
+
+log_path = output_dir / 'session_log.csv'
+fieldnames = sorted({key for row in session.log for key in row.keys()})
+with log_path.open('w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(session.log)
+
+cart_total = sum(price_by_id[item['product_id']] * item['quantity'] for item in session.cart)
+summary = {
+    'input_names': input_names,
+    'logged_in': session.is_logged_in(),
+    'cookie_keys': sorted(session.cookies().keys()),
+    'cart_count': session.cart_count(),
+    'cart_total': cart_total,
+    'session_event_count': len(session.log),
+    'replay_cart_count': replay.cart_count(),
+    'policy_count': len(policy_lines),
+    'event_counts': dict(Counter(row['event'] for row in events)),
+}
+summary_path = output_dir / 'session_summary.json'
+summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
+print('log:', log_path, len(session.log))
+print('summary:', summary)
 ~~~
+
+## 왜 이 풀이가 기준 답안인지
+
+폼 구조, 카탈로그, 정책, 이벤트 로그를 각각 읽고 DemoSession 상태로 연결했다. CSV에는 합성 이벤트 로그만 저장하고, JSON에는 쿠키 값이 아니라 cookie_keys만 저장한다. session 상태와 replay 상태를 분리해 현재 조작 결과와 이벤트 재생 결과를 따로 검증할 수 있다.
 
 ## 채점 메모
 
-- 코드가 한 번 실행되어 산출물을 만들고, 다시 실행해도 같은 결과가 나와야 한다.
-- 상태 변화, selector, 저장 경로, 수집 개수가 요약 문장과 충돌하지 않아야 한다.
-- 실제 사이트로 옮길 때 필요한 요청 간격과 오류 처리 언급이 있어야 한다.
-
-### 보강 설명 1
-
-레슨 05 최종 미션 정답은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 2
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
-
-### 보강 설명 3
-
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 4
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
-
-### 보강 설명 5
-
-레슨 05 최종 미션 정답은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+- token 원문, session_id 값, 비밀번호가 저장 산출물에 없어야 한다.
+- session_log.csv에는 header와 event 행이 있어야 한다.
+- session_summary.json에는 cookie_keys, cart_count, event_count 또는 session_event_count가 있어야 한다.
+- 이벤트 재생은 add와 remove 순서를 지켜야 한다.
+- 실제 사이트 확장 전 권한, 약관, 개인정보, 저장 기준을 설명할 수 있어야 한다.

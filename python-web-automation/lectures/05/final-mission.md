@@ -13,17 +13,27 @@ jupyter:
 
 # 레슨 05 — 최종 미션
 
-로그인 폼, 카탈로그, 세션 이벤트를 사용해 안전한 세션 상태 리포트를 만든다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/05/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2005%20%E2%80%94%20%EC%84%B8%EC%85%98%EA%B3%BC%20%EC%BF%A0%ED%82%A4%20%EC%83%81%ED%83%9C%20%EA%B4%80%EB%A6%AC.ipynb)
+
+로그인 폼, 카탈로그, 쿠키 정책, 세션 이벤트 CSV를 사용해 안전한 세션 상태 요약을 만든다. 이번 미션은 실제 사이트 요청 없이 합성 fixture와 DemoSession만 사용한다.
+
+## 목표
+
+- login_form.html에서 token과 input name을 읽는다.
+- catalog_page.html에서 상품 목록과 가격표를 만든다.
+- DemoSession에 로그인, 필터, 장바구니 상태를 반영한다.
+- session_events.csv를 재생해 상태 변화를 검증한다.
+- session_log.csv와 session_summary.json을 저장한다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter, defaultdict
 
 try:
     import requests
@@ -49,30 +59,61 @@ def load_text(filename):
         return response.text
     return Path(DATA_BASE, filename).read_text(encoding='utf-8')
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
+
+def read_csv_rows(filename):
+    return list(csv.DictReader(load_text(filename).splitlines()))
 
 class DemoSession:
     def __init__(self):
         self.client = requests.Session()
         self.cart = []
         self.log = []
+
     def login(self, username, token):
         if token != 'safe-token-05':
             raise ValueError('invalid token')
         self.client.cookies.set('demo_user', username)
         self.client.cookies.set('session_id', 'demo-session-05')
         self.log.append({'event': 'login', 'user': username})
+
+    def logout(self):
+        self.client.cookies.clear()
+        self.log.append({'event': 'logout'})
+
     def set_filter(self, name, value):
         self.client.cookies.set(f'filter_{name}', str(value))
         self.log.append({'event': 'filter', 'name': name, 'value': str(value)})
+
     def add_to_cart(self, product_id, quantity=1):
-        self.cart.append({'product_id': product_id, 'quantity': int(quantity)})
-        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': int(quantity)})
+        quantity = int(quantity)
+        self.cart.append({'product_id': product_id, 'quantity': quantity})
+        self.log.append({'event': 'add', 'product_id': product_id, 'quantity': quantity})
+
+    def remove_from_cart(self, product_id, quantity=1):
+        quantity = int(quantity)
+        remaining = quantity
+        new_cart = []
+        for item in self.cart:
+            if item['product_id'] == product_id and remaining > 0:
+                removed = min(item['quantity'], remaining)
+                item = {**item, 'quantity': item['quantity'] - removed}
+                remaining -= removed
+            if item['quantity'] > 0:
+                new_cart.append(item)
+        self.cart = new_cart
+        self.log.append({'event': 'remove', 'product_id': product_id, 'quantity': quantity - remaining})
+
     def is_logged_in(self):
         return self.client.cookies.get('session_id') is not None
+
     def cookies(self):
         return self.client.cookies.get_dict()
+
     def cart_count(self):
         return sum(item['quantity'] for item in self.cart)
 
@@ -82,61 +123,57 @@ print('data base:', DATA_BASE)
 
 ## 제출 산출물
 
-- 실행 가능한 노트북
-- 결과 CSV 또는 정리 파일
-- 자동화 결과 요약 3문장
-- 안전 규칙 점검 메모 2개
+1. 실행 가능한 노트북
+2. outputs/lesson05/session_log.csv
+3. outputs/lesson05/session_summary.json
+4. 자동화 결과 요약 3문장
+5. 쿠키와 세션 안전 규칙 메모 2개
+
+## 구현 조건
+
+- 실제 계정, 실제 쿠키, 비밀번호를 사용하지 않는다.
+- token 원문과 session_id 값을 산출물에 저장하지 않는다.
+- JSON 요약에는 cookie_keys, cart_count, event_count, policy_count를 포함한다.
+- CSV 로그에는 event와 필요한 합성 값만 남긴다.
+- 이벤트 재생 결과와 현재 session 상태를 구분해서 설명한다.
 
 ## 스타터 코드
 
 ~~~python
-# 로그인, 필터, 장바구니, 로그 저장 흐름을 완성한다
+# 1. form/catalog/policy/event fixture 읽기
 session = DemoSession()
+
+# 2. 로그인, 필터, 장바구니 상태 만들기
+session_log = []
+
+# 3. CSV/JSON 산출물 저장
 # TODO
 ~~~
 
-## 자동화 결과 요약
+## 자동화 결과 요약 양식
 
-- 자동화 대상:
-- 핵심 결과:
+- 사용한 fixture:
+- 최종 상태:
 - 다음 실행 때 조심할 점:
 
-### 보강 설명 1
+## 안전 규칙 메모 양식
 
-레슨 05 최종 미션은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
+- 쿠키와 token 저장 기준:
+- 실제 사이트 확장 전 확인할 점:
 
-### 보강 설명 2
+## 평가 루브릭
 
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+| 항목 | 배점 | 확인 방법 |
+|---|---:|---|
+| 폼 구조 이해 | 20 | hidden token과 input name을 읽는다 |
+| 세션 상태 관리 | 25 | 쿠키, 필터, 장바구니 상태를 설명한다 |
+| 이벤트 재생 | 20 | session_events.csv를 순서대로 처리한다 |
+| 산출물 저장 | 25 | CSV 로그와 JSON 요약을 만든다 |
+| 안전 메모 | 10 | 실제 쿠키와 민감정보를 저장하지 않는다 |
 
-### 보강 설명 3
+## 제출 전 체크
 
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 4
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
-
-### 보강 설명 5
-
-레슨 05 최종 미션은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
-
-### 보강 설명 7
-
-실제 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 쿠키, 폼 입력, selector, wait, 로그 같은 운영 요소를 초반부터 명시적으로 다룬다.
-
-### 보강 설명 8
-
-외부 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 fixture는 안전한 반복 연습을 위한 합성 데이터다.
-
-### 보강 설명 9
-
-레슨 05 최종 미션은 실행 결과만 맞추는 것이 아니라 재현 가능한 절차를 남기는 것이 핵심이다. 입력 파일, 반복 단위, selector 또는 상태 변수, 저장 경로를 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 10
-
-학생이 막히면 완성 코드를 보여주기보다 HTML 구조, CSV 헤더, 상태 변화 순서를 먼저 말로 설명하게 한다. 구조를 설명할 수 있으면 코드도 안정된다.
+- 새 런타임에서 전체 실행해도 같은 산출물이 만들어지는가.
+- outputs/lesson05 아래에 CSV와 JSON이 생성되는가.
+- 쿠키 값 원문, token, 비밀번호가 저장 파일에 들어가지 않았는가.
+- 상태 변화 순서를 말로 설명할 수 있는가.

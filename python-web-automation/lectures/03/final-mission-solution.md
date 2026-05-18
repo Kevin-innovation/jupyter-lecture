@@ -13,19 +13,19 @@ jupyter:
 
 # 레슨 03 — 최종 미션 모범 답안
 
-> 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/03/%EB%A0%88%EC%8A%A8%2003%20%E2%80%94%20HTML%20%ED%85%8C%EC%9D%B4%EB%B8%94%EA%B3%BC%20%EB%A6%AC%EC%8A%A4%ED%8A%B8%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%A0%95%EB%A6%AC.ipynb)
 
-대시보드, 피드백 카드, todo 리스트를 읽어 하나의 운영 요약 CSV를 만든다.
+대시보드 표, 피드백 카드, todo 리스트, 루브릭 CSV를 읽어 운영 요약 CSV와 JSON을 만든다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter, defaultdict
 
 try:
     import requests
@@ -59,9 +59,17 @@ def load_bytes(filename):
         return response.content
     return Path(DATA_BASE, filename).read_bytes()
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
 
+def percent_to_int(text):
+    return clean_int(text)
+
+def safe_text(node, default=''):
+    return node.text.strip() if node else default
 
 print('colab:', IS_COLAB)
 print('data base:', DATA_BASE)
@@ -70,72 +78,68 @@ print('data base:', DATA_BASE)
 ## 모범 답안
 
 ~~~python
-dashboard_html = load_text('class_dashboard.html')
-soup = BeautifulSoup(dashboard_html, 'html.parser')
-headers = [th.text.strip() for th in soup.select('#class-table thead th')]
+dashboard_soup = read_soup('class_dashboard.html')
+headers = [th.text.strip() for th in dashboard_soup.select('#class-table thead th')]
 records = []
-for tr in soup.select('#class-table tbody tr'):
+for tr in dashboard_soup.select('#class-table tbody tr'):
     row = dict(zip(headers, [td.text.strip() for td in tr.select('td')]))
-    row['progress_num'] = clean_int(row['progress'])
+    row['progress_num'] = percent_to_int(row['progress'])
+    row['minutes_num'] = clean_int(row['minutes'])
     records.append(row)
-course_summary = {}
+
+course_summary = defaultdict(lambda: {'count': 0, 'progress_total': 0, 'minutes_total': 0, 'watch': 0})
 for row in records:
-    course_summary.setdefault(row['course'], {'total': 0, 'count': 0})
-    course_summary[row['course']]['total'] += row['progress_num']
-    course_summary[row['course']]['count'] += 1
-summary_rows = [{'course': k, 'avg_progress': round(v['total']/v['count'], 1), 'student_count': v['count']} for k,v in course_summary.items()]
+    bucket = course_summary[row['course']]
+    bucket['count'] += 1
+    bucket['progress_total'] += row['progress_num']
+    bucket['minutes_total'] += row['minutes_num']
+    if row['status'] == 'watch':
+        bucket['watch'] += 1
+
+summary_rows = []
+for course, values in sorted(course_summary.items()):
+    summary_rows.append({
+        'course': course,
+        'student_count': values['count'],
+        'avg_progress': round(values['progress_total'] / values['count'], 1),
+        'avg_minutes': round(values['minutes_total'] / values['count'], 1),
+        'watch_count': values['watch'],
+    })
+
+feedback_soup = read_soup('feedback_cards.html')
+high_titles = [card.select_one('.title').text.strip() for card in feedback_soup.select('article.feedback-card') if card['data-priority'] == 'high']
+
+todo_soup = read_soup('todo_list.html')
+todo_counts = Counter(item['data-status'] for item in todo_soup.select('li.todo-item'))
+
+rubrics = list(csv.DictReader(load_text('rubric.csv').splitlines()))
+rubric_total = sum(int(row['max_score']) for row in rubrics)
+
 with open('lesson03_final_summary.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=['course','avg_progress','student_count'])
-    writer.writeheader(); writer.writerows(summary_rows)
-print('saved:', len(summary_rows))
+    writer = csv.DictWriter(f, fieldnames=['course', 'student_count', 'avg_progress', 'avg_minutes', 'watch_count'])
+    writer.writeheader()
+    writer.writerows(summary_rows)
+
+operation_note = {
+    'student_rows': len(records),
+    'high_feedback_count': len(high_titles),
+    'high_feedback_titles': high_titles,
+    'todo_status': dict(todo_counts),
+    'rubric_total': rubric_total,
+}
+Path('lesson03_final_note.json').write_text(json.dumps(operation_note, ensure_ascii=False, indent=2), encoding='utf-8')
+print('saved:', 'lesson03_final_summary.csv', len(summary_rows))
+print(operation_note)
 ~~~
+
+## 왜 이 풀이가 기준 답안인지
+
+표, 카드, 리스트, CSV를 각각 다른 방식으로 읽되 최종 결과는 운영자가 볼 수 있는 요약으로 통일했다. 숫자로 계산할 값은 모두 변환했고, 저장 파일에는 코스별 학생 수와 평균 진도, 관찰 학생 수가 들어간다. high priority 피드백과 todo 상태 분포도 JSON에 남겨 다음 보고서 단계에서 바로 재사용할 수 있다.
 
 ## 채점 메모
 
-- 코드가 한 번 실행되어 산출물을 만들고, 다시 실행해도 같은 결과가 나와야 한다.
-- 결과 저장 경로, 수집 개수, 필터 조건이 요약 문장과 충돌하지 않아야 한다.
-- 실제 사이트로 옮길 때 필요한 요청 간격과 오류 처리 언급이 있어야 한다.
-
-### 보강 설명 1
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 2
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 3
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 4
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 5
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 7
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 8
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 9
-
-최종 미션 정답은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 10
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 11
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+- records 길이가 원본 table 행 수와 같은지 확인한다.
+- course_summary의 count 합계가 records 길이와 같은지 확인한다.
+- watch_count는 status가 watch인 행만 세야 한다.
+- rubric_total은 100이 되어야 한다.
+- 실제 사이트로 확장할 때 요청 간격과 개인정보 확인 기준을 설명할 수 있어야 한다.

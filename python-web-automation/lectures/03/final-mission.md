@@ -13,17 +13,27 @@ jupyter:
 
 # 레슨 03 — 최종 미션
 
-대시보드, 피드백 카드, todo 리스트를 읽어 하나의 운영 요약 CSV를 만든다.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/03/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2003%20%E2%80%94%20HTML%20%ED%85%8C%EC%9D%B4%EB%B8%94%EA%B3%BC%20%EB%A6%AC%EC%8A%A4%ED%8A%B8%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%A0%95%EB%A6%AC.ipynb)
+
+대시보드 표, 피드백 카드, todo 리스트, 루브릭 CSV를 읽어 하나의 운영 요약을 만든다. 이번 미션은 실제 사이트를 요청하지 않고 합성 fixture만 사용한다.
+
+## 목표
+
+- class_dashboard.html에서 학생별 records를 만든다.
+- feedback_cards.html에서 high priority 제목을 모은다.
+- todo_list.html에서 상태별 개수를 센다.
+- rubric.csv에서 총점과 평가 항목을 읽는다.
+- 결과를 CSV 또는 JSON으로 저장하고 3문장 요약을 작성한다.
 
 ## 0. 환경 셀
 
 ~~~python
 import os
 import re
-import time
 import csv
+import json
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from collections import Counter, defaultdict
 
 try:
     import requests
@@ -57,9 +67,17 @@ def load_bytes(filename):
         return response.content
     return Path(DATA_BASE, filename).read_bytes()
 
+def read_soup(filename):
+    return BeautifulSoup(load_text(filename), 'html.parser')
+
 def clean_int(text):
     return int(re.sub(r'[^0-9]', '', str(text)))
 
+def percent_to_int(text):
+    return clean_int(text)
+
+def safe_text(node, default=''):
+    return node.text.strip() if node else default
 
 print('colab:', IS_COLAB)
 print('data base:', DATA_BASE)
@@ -67,81 +85,63 @@ print('data base:', DATA_BASE)
 
 ## 제출 산출물
 
-- 실행 가능한 노트북
-- 결과 CSV 또는 정리 파일
-- 자동화 결과 요약 3문장
-- 안전 규칙 점검 메모 2개
+1. 실행 가능한 노트북
+2. lesson03_final_summary.csv 또는 lesson03_final_summary.json
+3. 자동화 결과 요약 3문장
+4. 안전 규칙 점검 메모 2개
+
+## 구현 조건
+
+- 반복 단위 selector를 코드에 명확히 드러낸다.
+- progress, submissions, passed, minutes, max_score는 숫자로 변환한다.
+- 저장 파일에는 최소 course, student_count, avg_progress, watch_count 중 세 가지 이상을 포함한다.
+- high priority 피드백 수와 pending todo 수를 요약에 포함한다.
+- 실제 사이트로 확장할 때 지켜야 할 안전 규칙을 주석이나 메모로 남긴다.
 
 ## 스타터 코드
 
 ~~~python
-# table, card, list를 각각 파싱한 뒤 summary_rows를 저장한다
+# 1. table records 만들기
 summary_rows = []
+
+# 2. card/list/csv 요약 만들기
+operation_note = {}
+
+# 3. CSV 또는 JSON으로 저장하기
 # TODO
 ~~~
 
-## 자동화 결과 요약
+## 자동화 결과 요약 양식
 
 - 수집 대상:
 - 핵심 결과:
 - 다음 실행 때 조심할 점:
 
-### 보강 설명 1
+## 안전 규칙 메모 양식
 
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
+- 요청 간격 또는 최대 요청 수:
+- 개인정보와 약관 확인:
 
-### 보강 설명 2
+## 제출 전 체크
 
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
+- 같은 셀을 다시 실행해도 결과 파일이 정상적으로 덮어써지는가.
+- 저장 파일을 열었을 때 컬럼 이름이 운영자가 이해할 수 있는가.
+- 빈 결과가 나왔을 때 성공으로 오해하지 않도록 개수 출력이 있는가.
+- fixture 이름이 코드에 정확히 들어갔는가.
 
-### 보강 설명 3
+## 평가 루브릭
 
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
+| 항목 | 배점 | 확인 방법 |
+|---|---:|---|
+| selector 정확도 | 30 | table, card, list 반복 단위가 정확하다 |
+| 타입 변환 | 20 | progress, minutes, max_score가 숫자로 변환된다 |
+| 요약 품질 | 20 | 코스별 평균과 상태별 개수를 포함한다 |
+| 산출물 저장 | 20 | CSV 또는 JSON 파일을 재실행 가능하게 만든다 |
+| 안전 메모 | 10 | 실제 사이트 확장 전 확인 기준을 적는다 |
 
-### 보강 설명 4
+## 미션 운영 팁
 
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
+최종 미션은 문제 1~15를 그대로 복사하는 과제가 아니다. 필요한 코드를 함수로 묶거나 순서를 다시 정리해도 된다. 다만 결과 파일에는 운영자가 읽을 수 있는 컬럼 이름이 있어야 하고, 요약 문장에는 수집 대상과 핵심 결과가 들어가야 한다.
 
-### 보강 설명 5
+제출 전에는 런타임을 다시 시작한 뒤 환경 셀부터 마지막 저장 셀까지 한 번에 실행한다. 중간 변수에 의존해 우연히 동작하는 코드는 실제 운영 자동화로 볼 수 없다.
 
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 6
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 7
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 8
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 9
-
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 10
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 11
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
-
-### 보강 설명 12
-
-실제 사이트로 확장할 때는 약관, robots.txt, 요청 간격, 개인정보 여부를 먼저 확인한다. 이 코스의 초반 fixture는 그 안전 습관을 만들기 위한 장치다.
-
-### 보강 설명 13
-
-최종 미션은 실행 결과보다 과정 추적이 중요하다. 입력 파일, 반복 단위, selector 또는 경로, 변환 규칙을 분리하면 오류 위치를 빠르게 찾을 수 있다.
-
-### 보강 설명 14
-
-수업 중에는 학생에게 완성 코드를 먼저 보여주지 말고 HTML 구조나 CSV 헤더를 읽게 한다. 구조를 말로 설명할 수 있으면 코드는 짧아진다.
-
-### 보강 설명 15
-
-운영형 자동화는 다음 주에도 다시 실행되어야 한다. 그래서 파일명, URL, 저장 경로, 로그, 요약 문장을 코드 안에서 일관되게 남긴다.
