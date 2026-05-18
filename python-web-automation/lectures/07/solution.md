@@ -13,6 +13,8 @@ jupyter:
 
 # 레슨 07 — 실습 문제 정답지
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/07/%EB%A0%88%EC%8A%A8%2007%20%E2%80%94%20%EC%95%88%EC%A0%95%EC%A0%81%EC%9D%B8%20selector%EC%99%80%20wait.ipynb)
+
 > 🔒 교사·관리자 전용. 학생에게 배포 금지.
 
 안정적인 selector와 wait 실습 문제의 모범 답안이다. 출력값만 보지 말고 상태 변화, selector 안정성, 로그를 함께 확인한다.

@@ -13,6 +13,10 @@ jupyter:
 
 # 레슨 08 — 실습 문제
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/08/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2008%20%E2%80%94%20%EC%88%98%EC%A7%91%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EA%B2%80%EC%A6%9D%EA%B3%BC%20%EC%A0%80%EC%9E%A5.ipynb)
+
+> 코랩에서 문제를 풀려면 우측 상단 또는 아래의 **Open in Colab** 버튼을 클릭한다. 빈칸은 정답을 복사하지 말고 데이터 구조를 확인한 뒤 채운다.
+
 수집 데이터 검증과 저장 레슨의 학생용 문제 노트북이다. 강의 노트북을 먼저 실행한 뒤 빈칸을 직접 채운다.
 
 ## 통과 기준
@@ -374,14 +378,14 @@ checked_rows, clean_rows = build_clean_feed()
 print(len(checked_rows), len(clean_rows))
 ~~~
 
-### 보강 설명 1
+## 풀이 전 점검
 
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
+문제를 풀기 전에 raw_product_feed.csv의 헤더와 category_rules.json의 키를 먼저 확인한다. 이번 문제는 함수 이름을 외우는 수업이 아니라 저장 가능한 데이터를 만드는 순서를 연습하는 수업이다.
 
-### 보강 설명 2
+- 파일명은 정확히 입력한다.
+- 컬럼명은 CSV 헤더에서 확인한다.
+- 오류 목록이 비어 있는지로 유효 여부를 판단한다.
+- 중복 제거는 저장 직전에 적용한다.
+- 저장 파일을 만든 뒤 Path(...).exists()로 확인한다.
 
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
-
-### 보강 설명 3
-
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
+문제 1~5는 입력 구조 확인, 문제 6~10은 검증과 정제, 문제 11~15는 저장과 파이프라인 구성이다. 앞 문제에서 만든 변수를 뒤 문제에서 계속 사용하므로 노트북은 위에서 아래로 실행한다.

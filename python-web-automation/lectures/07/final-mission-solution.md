@@ -13,6 +13,8 @@ jupyter:
 
 # 레슨 07 — 최종 미션 모범 답안
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/07/%EB%A0%88%EC%8A%A8%2007%20%E2%80%94%20%EC%95%88%EC%A0%95%EC%A0%81%EC%9D%B8%20selector%EC%99%80%20wait.ipynb)
+
 > 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
 
 동적 대시보드 fixture에서 안정 selector와 wait 케이스를 검증하고 결과 CSV를 만든다.

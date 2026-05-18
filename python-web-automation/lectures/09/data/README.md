@@ -13,3 +13,9 @@ targets.csv는 수집 대상의 우선순위와 최소 요청 간격을 담는�
 ## 검증 포인트
 
 학생은 재시도 가능한 상태 코드와 즉시 중단해야 하는 상태 코드를 구분해야 한다. 무한 재시도, sleep 남발, 실패 숨김은 모두 보완 대상이다. 로그에는 endpoint, attempt_no, status_code, retry 여부가 남아야 한다.
+
+## 수업 운영 메모
+
+이 데이터는 실제 서버에 요청하지 않고 실패와 재시도를 재현하기 위한 fixture다. targets.csv는 요청 후보, response_plan.csv는 응답 순서, robots_sample.txt는 차단 경로, payload_templates.json은 운영 요약 문구를 담당한다.
+
+학생에게는 먼저 robots_sample.txt의 Disallow 경로를 읽게 한다. 그 다음 targets.csv에서 어떤 endpoint가 제외되는지 표시하게 하면 안전 필터의 목적이 분명해진다. response_plan.csv는 429, 503, 404, 200을 구분하는 연습에 사용한다.

@@ -13,6 +13,8 @@ jupyter:
 
 # 레슨 06 — 최종 미션 모범 답안
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/06/%EB%A0%88%EC%8A%A8%2006%20%E2%80%94%20%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80%20%EC%9E%90%EB%8F%99%ED%99%94%20%EC%9E%85%EB%AC%B8.ipynb)
+
 > 🔒 교사용. 학생에게는 최종 미션 문제 파일만 공유한다.
 
 폼 입력, Todo 클릭, 탭 전환을 자동화하고 QA 로그를 만든다.

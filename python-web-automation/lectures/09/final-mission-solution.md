@@ -13,6 +13,10 @@ jupyter:
 
 # 레슨 09 — 최종 미션 모범 답안
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/09/%EB%A0%88%EC%8A%A8%2009%20%E2%80%94%20%EC%86%8D%EB%8F%84%20%EC%A0%9C%ED%95%9C%2C%20%EC%9E%AC%EC%8B%9C%EB%8F%84%2C%20%EB%A1%9C%EA%B7%B8.ipynb)
+
+> 선생님용 최종 미션 모범 답안이다. 코랩에서 확인하려면 우측 상단 또는 아래의 **Open in Colab** 버튼을 클릭한다.
+
 > 교사 확인용 모범 답안이다. 학생에게는 최종 미션 조건만 제공한다.
 
 ## 실행 코드
@@ -110,7 +114,6 @@ def parse_disallow(text):
             if path:
                 blocked.append(path)
     return blocked
-
 
 targets = load_csv('targets.csv')
 print(len(targets))

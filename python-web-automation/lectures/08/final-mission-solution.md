@@ -13,6 +13,10 @@ jupyter:
 
 # 레슨 08 — 최종 미션 모범 답안
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/08/%EB%A0%88%EC%8A%A8%2008%20%E2%80%94%20%EC%88%98%EC%A7%91%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EA%B2%80%EC%A6%9D%EA%B3%BC%20%EC%A0%80%EC%9E%A5.ipynb)
+
+> 선생님용 최종 미션 모범 답안이다. 코랩에서 확인하려면 우측 상단 또는 아래의 **Open in Colab** 버튼을 클릭한다.
+
 > 교사 확인용 모범 답안이다. 학생에게는 최종 미션 조건만 제공한다.
 
 ## 실행 코드
@@ -100,7 +104,6 @@ def validate_feed_row(row, rules):
     if row.get('status') not in rules['valid_status']:
         errors.append('invalid:status')
     return errors
-
 
 rows = load_csv('raw_product_feed.csv')
 print(len(rows))

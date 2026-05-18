@@ -2,5 +2,10 @@ selector,timeout_steps,expected_text
 [data-testid="metric-active"],0,활성 18
 [data-testid="metric-submit"],2,제출 42
 [data-testid="metric-pass"],3,통과 31
+[data-testid="metric-feedback"],4,피드백 12
+[data-testid="metric-warning"],5,주의 3
 [data-testid="student-row"],2,김도윤
+[data-testid="refresh-button"],0,새로고침
+[data-testid="page-title"],0,동적 대시보드
 [data-testid="missing"],1,
+[data-testid="ghost-panel"],2,

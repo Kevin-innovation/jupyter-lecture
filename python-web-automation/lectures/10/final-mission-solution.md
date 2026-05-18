@@ -13,6 +13,11 @@ jupyter:
 
 # 레슨 10 — 최종 미션 모범 답안
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/10/%EB%A0%88%EC%8A%A8%2010%20%E2%80%94%20%ED%86%B5%ED%95%A9%20%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8%3A%20%EC%9E%90%EB%8F%99%ED%99%94%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%A7%8C%EB%93%A4%EA%B8%B0.ipynb)
+
+> 선생님용 최종 미션 모범 답안이다. 코랩에서 확인하려면 우측 상단 또는 아래의 **Open in Colab** 버튼을 클릭한다.
+
+
 > 교사 확인용 모범 답안이다. 학생에게는 최종 미션 조건만 제공한다.
 
 ## 실행 코드
@@ -166,3 +171,7 @@ print('\n'.join(memo))
 - 입력 파일을 모두 읽었는지 확인한다.
 - 검증 기준이 코드에 명시되어 있는지 확인한다.
 - 저장 파일과 운영 요약이 함께 있는지 확인한다.
+
+## 채점 보충 기준
+
+학생 답안은 모범 답안과 코드 줄이 완전히 같을 필요는 없다. 다만 포털 링크 수집, 공지/과정/manifest/status/rules 읽기, 리포트 대상 필터링, 저장, 운영 메모가 모두 있어야 한다. 특히 최종 미션은 “실행됐다”보다 “다음 주에도 같은 절차로 다시 실행할 수 있다”가 핵심 기준이다. 파일명과 행 수를 출력하지 않은 답안은 저장 검증이 약한 것으로 본다.

@@ -13,6 +13,8 @@ jupyter:
 
 # 레슨 06 — 실습 문제 정답지
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/06/%EB%A0%88%EC%8A%A8%2006%20%E2%80%94%20%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80%20%EC%9E%90%EB%8F%99%ED%99%94%20%EC%9E%85%EB%AC%B8.ipynb)
+
 > 🔒 교사·관리자 전용. 학생에게 배포 금지.
 
 브라우저 자동화 입문 실습 문제의 모범 답안이다. 출력값만 보지 말고 상태 변화, selector 안정성, 로그를 함께 확인한다.

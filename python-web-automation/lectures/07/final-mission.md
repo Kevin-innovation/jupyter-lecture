@@ -13,6 +13,8 @@ jupyter:
 
 # 레슨 07 — 최종 미션
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/07/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2007%20%E2%80%94%20%EC%95%88%EC%A0%95%EC%A0%81%EC%9D%B8%20selector%EC%99%80%20wait.ipynb)
+
 동적 대시보드 fixture에서 안정 selector와 wait 케이스를 검증하고 결과 CSV를 만든다.
 
 ## 0. 환경 셀

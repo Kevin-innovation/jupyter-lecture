@@ -13,6 +13,10 @@ jupyter:
 
 # 레슨 09 — 실습 문제
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Kevin-innovation/jupyter-lecture/blob/main/python-web-automation/lectures/09/%5B%ED%95%99%EC%83%9D%EC%9A%A9%5D%20%EB%A0%88%EC%8A%A8%2009%20%E2%80%94%20%EC%86%8D%EB%8F%84%20%EC%A0%9C%ED%95%9C%2C%20%EC%9E%AC%EC%8B%9C%EB%8F%84%2C%20%EB%A1%9C%EA%B7%B8.ipynb)
+
+> 코랩에서 문제를 풀려면 우측 상단 또는 아래의 **Open in Colab** 버튼을 클릭한다. 빈칸은 정답을 복사하지 말고 데이터 구조를 확인한 뒤 채운다.
+
 속도 제한, 재시도, 로그 레슨의 학생용 문제 노트북이다. 강의 노트북을 먼저 실행한 뒤 빈칸을 직접 채운다.
 
 ## 통과 기준
@@ -370,14 +374,14 @@ message = templates['summary_template'].format(success=summary['success_count'],
 print(____)
 ~~~
 
-### 보강 설명 1
+## 풀이 전 점검
 
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
+문제를 풀기 전에 targets.csv, response_plan.csv, robots_sample.txt, payload_templates.json을 차례로 확인한다. 이번 문제는 요청을 많이 보내는 방법이 아니라 요청을 멈추고 기록하는 기준을 배우는 수업이다.
 
-### 보강 설명 2
+- endpoint_id는 모든 로그와 요약의 기준 키다.
+- robots 차단 경로에 해당하는 대상은 실행 목록에서 제외한다.
+- 429, 503은 재시도 대상이고 404는 즉시 중단 대상이다.
+- max_attempts를 넘으면 마지막 응답과 로그를 반환한다.
+- CSV 로그와 JSON 요약은 둘 다 운영자가 읽는 산출물이다.
 
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
-
-### 보강 설명 3
-
-문제가 막히면 HTML 태그, CSV 헤더, JSON 키를 먼저 소리 내어 읽는다. 함수명을 떠올리기 전에 입력 데이터의 구조를 확인하면 빈칸을 더 안정적으로 채울 수 있다.
+문제 1~5는 입력과 안전 필터, 문제 6~10은 재시도 정책, 문제 11~15는 전체 실행과 저장이다. 앞 문제에서 만든 allowed, ordered, all_logs, final 변수를 뒤 문제에서 사용하므로 위에서 아래로 실행한다.
